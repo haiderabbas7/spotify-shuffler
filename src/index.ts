@@ -1,19 +1,22 @@
 //IMPORTS
 import axios from 'axios'
 import * as querystring from "node:querystring"
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 //GLOBALS
 var entry_url = "http://localhost:8080/login"
-var client_id = "ee425c7c8e6145229201dc4c908501b0"
-var client_secret = "c77d8772e1844bc69334510d26a16f45"
+var client_id = process.env.CLIENT_ID
+var client_secret = process.env.CLIENT_SECRET
 var redirect_uri = 'http://localhost:8080/'
-
 var refresh_token = ""
 
 //CONSTANTS
 const express = require('express')
 const app = express()
 const port = 8080
+
+
 
 app.get('/login', (req: any, res: any) => {
     //hier umschreiben dass ein random string erstellt wird, für sicherheit idfk

@@ -1,9 +1,0 @@
--guck dir an was du alles mit dem access token bekommst
-
--mach testweise ein paar queries mit dem access token
-
--guck dir alle endpoints an und schreib die raus, die für mich wichtig sind
-
--erstell eine neue test playlist in spotify
-
--mach den ersten attempt an einem shuffle

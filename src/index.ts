@@ -2,6 +2,7 @@
 import axios from 'axios'
 import * as querystring from "node:querystring"
 import * as dotenv from 'dotenv'
+
 dotenv.config()
 
 //GLOBALS
@@ -10,13 +11,24 @@ var client_id = process.env.CLIENT_ID
 var client_secret = process.env.CLIENT_SECRET
 var redirect_uri = 'http://localhost:8080/'
 var refresh_token = ""
+var access_token = ""
 
 //CONSTANTS
 const express = require('express')
 const app = express()
 const port = 8080
 
-
+async function getProfile() {
+    axios.get('https://api.spotify.com/v1/me', {
+        headers: {
+            Authorization: 'Bearer ' + access_token
+        }
+    }).then(response => {
+        return response.data
+    }).catch(error => {
+        console.log(error)
+    })
+}
 
 app.get('/login', (req: any, res: any) => {
     //hier umschreiben dass ein random string erstellt wird, für sicherheit idfk
@@ -59,12 +71,16 @@ app.get('/', (req: any, res: any) => {
             'Authorization': 'Basic ' + Buffer.from(client_id + ':' + client_secret).toString('base64')
         }
     }).then(response => {
-        console.log(response.data)
-        res.send(response.data)
+        access_token = response.data.access_token
+        refresh_token = response.data.refresh_token
     }).catch(error => {
         console.log(error)
         res.status(error.response.status).send(error.response.data)
     })
+})
+
+app.get('/test', (req: any, res: any) => {
+    res.send(getProfile())
 })
 
 app.listen(port, () => {

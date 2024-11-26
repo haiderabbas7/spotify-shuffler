@@ -1,0 +1,137 @@
+Spotify zyklischer Album Shuffler
+
+
+KNOW-HOW
+SPOTIFY API
+	Client ID: ee425c7c8e6145229201dc4c908501b0
+	Client secret: c77d8772e1844bc69334510d26a16f45
+	==> PACK DIESE DATEN IN EINE .ENV DIE NICHT HOCHGELADEN WIRD
+		ALSO NICHT HARDCODED
+	Spotify Authorization and Authentication
+		Gibt hier vier verschiedene Flows, die verschieden funktionieren und für verschiedene Zwecke
+		Für meine Anwendung kann ich aber nur den "Authorization Code" Flow benutzen 
+		https://developer.spotify.com/documentation/web-api/tutorials/code-flow
+		Flow ist im Grunde OAuth2.0 Flow
+		Flow besteht aus dem Fragen nach einem Auth Code, User Consent, dann Fragen nach Access Token
+		Mit dem Access Token kann man dann die Anfragen stellen
+		Dieser ist für eine Stunde verfügbar
+		Man kann den Access Token mit einem Refresh Token refreshen, Refresh Token hat kein Expiry
+		==> Access Token immer kurz vor Ablauf refreshen
+	Access token erhalten
+	    jo wenn man client secret und ID und stuff abschickt nach user consent
+	    man erhält von spotify 5 sachen:
+	        access_token: den Token den man bei jeder Anfrage angeben muss
+	        token_type: idfk, aber das hat immer den Wert "Bearer"
+	        scope: der erlaubte Scope
+	        expires_in: so lange wie der Token valide ist, ist idR 1 stunde
+	        refresh_token: halt refresh token, guck dazu hier unten weiter
+
+PROTOTYP
+mach erstmal kein neues Projekt dazu auf, sondern mach es im DBWT2 projekt
+basically nen button auf ner neuen Route /spotify der alles umsetzen soll
+ANFODERUNGEN AN DEN PROTOTYPEN
+	-Spotify Auth flow komplett umsetzen, weil sonst gehts ja nicht
+	-alle playlists auslesen können
+	-dann für bestimmte hardcoded playlists shuffle umsetzen
+	-shuffle ist erstmal nicht dynamisch, sondern nur dieser eine fisher-yates algorithm
+==> DANACH: eigentliche Anwendung mit Node.js/TypeScript im Backend und evtl Redis machen
+
+
+OFFENE FRAGEN:
+-offene frage zu local files
+	citypop und rock playlist haben local files und würde die gerne weiterhin so benutzen und shufflen
+	wenn das ÜBERHAUPT nicht geht mit local files shuffling, dann muss ich mir nochmal überlegen, ob ich das umsetzen will
+	ANTWORT: "Local files also get shuffled around as I'm not removing and adding tracks, i'm just telling spotify to move tracks from this spot to this new spot!"
+		Das hat der dev von Shuffle idee 1 geantwortet
+		Und sein Shuffler hat auf meiner Rock playlist funktioniert und Local files geshuffled
+		Würde also sagen Shuffle idee 1 funktioniert mit local files
+		aber guck trotzdem nochmal nach, da Shuffle idee 1 ja etwas langsam ist
+		
+
+TODO:
+-Wenn auf den ersten Blick keine Obstacles im weg sind => einen generellen Plan entwerfen
+	also was ich so umsetzen will und dafür nen groben Plan machen
+-Vor der Entwicklung => Informieren zu API und code und alles und generelle Sachen machen
+	zb Spotify API verstehen: wie zb Auth funktioniert, welche API calls ich brauche und wie die funktionieren
+	Spotify API ding schon einstellen, also dass ich nen API Key habe
+	WAS FÜR EINE ART ANWENDUNG SOLL DAS GANZE SEIN:
+		also ob web app oder so idk
+		von der einfachheit ist ne web app nice, damits direkt auf dem handy auch verfügbar ist
+			prototyp wird einfacher zu schreiben sein, da ich momentam im web dev drin bin
+		aber so viel UI und frontend wirds nicht geben
+		es wird halt viel logik im backend geben
+		und da kann ich das ganze evtl mit anderen sprachen auf andere weisen aufbauen
+			vllt Python, Java oder C++?
+-Einen Prototypen zu Testzwecken entwickeln, bevor ich mich an die richtige Entwicklung ransetze
+	erstmal anforderungen an den prototypen stellen
+		muss die grund anforderungen an das projekt umsetzen
+		aber am besten so wenig wie möglich da das halt nur ein prototyp ist
+	Prototyp mit den bisherigen techniken aus DBWT1 und 2 entwickeln
+		damits halt schneller geht und so
+	SO GUT ES GEHT TESTEN
+		alle anforderungen testen
+-Wenn Prototyp gut lief => mit der richtigen Entwicklung starten
+	Erstmal nach neuen Technologien suchen
+		möchte das projekt gerne nutzen, um neue aktuelle Technologien kennenzulernen
+		also vllt React, TypeScript und Redis zum Cachen, so was halt
+
+
+
+KURZIDEE:
+basically ich hoste nen webserver, wird bei startup vom PC oder sonst wo gestartet
+	idk wie aber hauptsache das ding läuft die meiste zeit
+	evtl kann ich PC nie runterfahren sondern in ruhemodus packen oder so
+Dieser shuffled alle meine Spotify Playlists zu bestimmten Zeiten oder vllt zyklisch, zb jede 2 stunden
+Shuffle funktioniert natürlich über die Spotify API
+Shuffled alle selbst erstellten Playlists, wo am Ende kein Waiting List dransteht
+
+
+
+SHUFFLE:
+Für das Shuffle gibt es mehrere Ansätze
+1. In-place durch Bewegen einzelner songs wie https://stevenaleong.com/tools/spotifyplaylistrandomizer
+	basically er nimmt in der playlist random songs nacheinander und bewegt die nach oben
+	dadurch wird das "date added" metadatum für die songs nicht verändert
+	Nachteil ist halt, dass es lange dauert: Für Rock playlist mit 870 songs ungefähr 6 minuten
+2. In-place durch komplettes Neueinfügen OHNE dem Löschen der Playlist
+	EDIT: FUNKTIONIERT SOWEIT ICH WEIß NICHT MIT LOCAL FILES
+		DAHER DIESE IDEE VERWERFEN
+	SAFETY BACKUP:
+		Vor jeder Operation wird eine Backup Playlist erstellt
+		In diese Playlist werden alle Songs aus der Playlist eingefügt
+		Das ist zur sicherheit falls etwas kaputt geht
+	SHUFFLE
+		basically man extrahiert alle Songs aus der Playlist, also löscht sie
+		Wird intern im code gespeichert
+		dabei ist es ganz wichtig, dass man die Playlist nicht löscht
+			weil sonst bild und so verloren geht i guess
+		dann shuffled man intern im code
+		und fügt die geshuffleden songs in die Playlist mittels API ein
+		falls etwas schiefgeht, probier ein paar mal nochmal
+		falls nach alles tries immer noch nicht geht, skippe => dann gibt es mindestens noch das Backup
+===> Für jede Playlist die keine Waiting List ist shufflen
+
+
+
+WEITERE IDEEN:
+-MEIN EIGENER DYNAMISCHER SHUFFLING ALGO
+	-nicht die gesamte playlist shufflen, sondern nur X (50 bis 100) songs oder so
+		ich höre mir ja in einem sitting niemals die gesamte playlist an
+		dadurch kann ich last sparen, algo ist schneller
+		also playlist so shufflen, dass die ersten X songs geshuffled sind
+		rest kann so bleiben
+	-einen eigenen shuffling algo schreiben
+		zb evtl viel gehörte lieder weniger wahrscheinlich in die shuffle menge packen
+		und wenig gehörte lieder bevorzugen
+		vllt sogar auf alben und künstler ausweiten
+		das evtl durch stats von der API oder durch intern gespeicherte stats ermöglichen
+-web app dashboard für PC und mobile zur kontrolle schreiben
+	da evtl die anzahl an geshuffelden songs einstellen können
+	und playlists vllt aussortieren, die nicht geshuffled werden sollen
+	WENN ICH DAS MACHE: UNBEDINGT NEN BUTTON ZUM MANUELLEN ANSTOßEN DES SHUFFLINGS
+-SCHWER: Shuffling anstoßen nicht mehr in einem konstanten Intervall, sondern dynamisch an App- und Playlist nutzung gebunden
+	Also abhängig wie oft ich Spotify benutze und welche Playlists ich so höre
+	Dadurch dynamisch die Playlists shufflen, dazu einen Algorithmus beschreiben
+	Dadurch kann ich weniger gehörte Playlists weniger oft shufflen => Last sparen
+	Und gleichzeitig oft gehörte Playlists öfters shufflen => Be
+	MUSS SCHAUEN VON WO ICH MIR DIE STATS HOLE UND WIE ICH DIE DYNAMIK-LOGIK KONSTANT LAUFEN LASSEN

@@ -1,22 +1,21 @@
-//IMPORTS
 import axios from 'axios'
 import * as querystring from "node:querystring"
 import * as dotenv from 'dotenv'
+import * as crypto from 'crypto'
 
 dotenv.config()
 
-//GLOBALS
-var entry_url = "http://localhost:8080/login"
-var client_id = process.env.CLIENT_ID
-var client_secret = process.env.CLIENT_SECRET
-var redirect_uri = 'http://localhost:8080/'
-var refresh_token = ""
-var access_token = ""
-
-//CONSTANTS
 const express = require('express')
 const app = express()
-const port = 8080
+const port = 8088
+
+var entry_url = "http://localhost:" + port + "/login"
+var client_id = process.env.CLIENT_ID
+var client_secret = process.env.CLIENT_SECRET
+var redirect_uri = "http://localhost:" + port + "/"
+var state = crypto.randomBytes(16).toString('hex')
+var refresh_token = ""
+var access_token = ""
 
 async function getProfile() {
     axios.get('https://api.spotify.com/v1/me', {
@@ -31,9 +30,7 @@ async function getProfile() {
 }
 
 app.get('/login', (req: any, res: any) => {
-    //hier umschreiben dass ein random string erstellt wird, für sicherheit idfk
-    var state = "abcdefghijklmnop"
-    var scope = 'user-read-private user-read-email'
+    let scope = 'user-read-private user-read-email'
 
     res.redirect('https://accounts.spotify.com/authorize?' +
         querystring.stringify({
@@ -45,17 +42,11 @@ app.get('/login', (req: any, res: any) => {
         }))
 })
 
-/*
-HIER BEKOMMST DU VOM REDIRECT EIN GET ATTRIBUT code UND state
-code ist "An authorization code that can be exchanged for an access token."
-und state ist "The value of the state parameter supplied in the request.", also muss der gleiche sein wie im Login oben
-ab hier automatisiert mit ajax anfragen machen*/
 app.get('/', (req: any, res: any) => {
     let code = req.query.code
-    let state = req.query.state
+    let received_state = req.query.state
 
-    // Überprüfe den state-Wert
-    if (!state || state !== "abcdefghijklmnop") {
+    if (!received_state || received_state !== state) {
         return res.status(400).send('Invalid state parameter')
     }
 

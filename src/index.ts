@@ -18,6 +18,21 @@ var refresh_token = ""
 var access_token = ""
 
 
+async function getPlaylists(): Promise<any> {
+    try {
+        const response = await axios.get('https://api.spotify.com/v1/me/playlists', {
+            headers: {
+                Authorization: 'Bearer ' + access_token,
+                limit: 50
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 app.get('/login', (req: any, res: any) => {
     let scope = 'user-read-private user-read-email'
 
@@ -60,18 +75,14 @@ app.get('/', (req: any, res: any) => {
     })
 })
 
-app.get('/test', (req: any, res: any) => {
-    axios.get('https://api.spotify.com/v1/me', {
-        headers: {
-            Authorization: 'Bearer ' + access_token
-        }
-    }).then(response => {
-        console.log(response.data)
-        res.send(response.data)
-    }).catch(error => {
-        console.log(error)
-    })
-})
+app.get('/test', async (req: any, res: any) => {
+    try {
+        let data = await getPlaylists();
+        res.send(data);
+    } catch (error) {
+        res.status(500).send('Error fetching playlists');
+    }
+});
 
 app.listen(port, () => {
     console.log(`Rufe folgende URL auf: ${entry_url}`)

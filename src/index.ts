@@ -17,17 +17,6 @@ var state = crypto.randomBytes(16).toString('hex')
 var refresh_token = ""
 var access_token = ""
 
-function getProfile(): any {
-    axios.get('https://api.spotify.com/v1/me', {
-        headers: {
-            Authorization: 'Bearer ' + access_token
-        }
-    }).then(response => {
-        return response.data
-    }).catch(error => {
-        console.log(error)
-    })
-}
 
 app.get('/login', (req: any, res: any) => {
     let scope = 'user-read-private user-read-email'
@@ -64,9 +53,7 @@ app.get('/', (req: any, res: any) => {
     }).then(response => {
         access_token = response.data.access_token
         refresh_token = response.data.refresh_token
-        console.log(response.data)
         res.send(response.data)
-        //res.send(response.data + "\n\n\naccess_token: " + access_token + "\n\nrefresh_token: " + refresh_token)
     }).catch(error => {
         console.log(error)
         res.status(error.response.status).send(error.response.data)
@@ -74,10 +61,16 @@ app.get('/', (req: any, res: any) => {
 })
 
 app.get('/test', (req: any, res: any) => {
-    //TODO: das geht hier nicht, fix das. vllt wird die globale access_token nicht gesetzt oder so
-    const data = getProfile()
-    console.log(data)
-    res.send(data)
+    axios.get('https://api.spotify.com/v1/me', {
+        headers: {
+            Authorization: 'Bearer ' + access_token
+        }
+    }).then(response => {
+        console.log(response.data)
+        res.send(response.data)
+    }).catch(error => {
+        console.log(error)
+    })
 })
 
 app.listen(port, () => {

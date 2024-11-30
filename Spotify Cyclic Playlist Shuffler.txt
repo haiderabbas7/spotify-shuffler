@@ -3,8 +3,6 @@ Spotify zyklischer Album Shuffler
 
 KNOW-HOW
 SPOTIFY API
-	Client ID: ee425c7c8e6145229201dc4c908501b0
-	Client secret: c77d8772e1844bc69334510d26a16f45
 	==> PACK DIESE DATEN IN EINE .ENV DIE NICHT HOCHGELADEN WIRD
 		ALSO NICHT HARDCODED
 	Spotify Authorization and Authentication

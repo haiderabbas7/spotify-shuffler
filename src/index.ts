@@ -33,8 +33,41 @@ async function getPlaylists(): Promise<any> {
     }
 }
 
+//Für die Playlist: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM
+//Für meinen User: https://api.spotify.com/v1/users/t6ijwf0r16yvskujumkyn78jx
+//Für die Tracks: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM/tracks
+async function getPlaylistByID(id: String): Promise<any> {
+    try {
+        const response = await axios.get('https://api.spotify.com/v1/playlists/' + id, {
+            headers: {
+                Authorization: 'Bearer ' + access_token,
+                limit: 50
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
+async function getTracksOfPlaylistByID(id: String): Promise<any> {
+    try {
+        const response = await axios.get('https://api.spotify.com/v1/playlists/' + id + "/tracks", {
+            headers: {
+                Authorization: 'Bearer ' + access_token,
+                limit: 50
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 app.get('/login', (req: any, res: any) => {
-    let scope = 'user-read-private user-read-email'
+    let scope = 'user-read-private user-read-email playlist-modify-public playlist-modify-private'
 
     res.redirect('https://accounts.spotify.com/authorize?' +
         querystring.stringify({
@@ -75,9 +108,12 @@ app.get('/', (req: any, res: any) => {
     })
 })
 
+//Für die Playlist: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM
+//Für meinen User: https://api.spotify.com/v1/users/t6ijwf0r16yvskujumkyn78jx
+//Für die Tracks: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM/tracks
 app.get('/test', async (req: any, res: any) => {
     try {
-        let data = await getPlaylists();
+        let data = await getPlaylistByID("2L1Mq9vGReVgN08y3gMfQM");
         res.send(data);
     } catch (error) {
         res.status(500).send('Error fetching playlists');

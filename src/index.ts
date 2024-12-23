@@ -66,6 +66,37 @@ async function getTracksOfPlaylistByID(id: String): Promise<any> {
     }
 }
 
+/**
+ * @param id - ID der Playlist
+ * @param range_start - Anfang der Sequenz an Liedern, die man reordern will
+ * @param range_length - Länge der Sequenz an Liedern, die man reordern will
+ * @param insert_before - Position, bevor die Sequenz eingefügt werden soll
+ * */
+async function reorderPlaylistByID(id: String, range_start: Number, range_length: Number, insert_before: Number): Promise<any> {
+    try {
+        let data = await getPlaylistByID(id);
+        let snapshot_id = data.snapshot_id;
+        const response = await axios.put(
+            'https://api.spotify.com/v1/playlists/' + id + "/tracks",
+            {
+                "range_start": range_start,
+                "range_length": range_length,
+                "insert_before": insert_before,
+                "snapshot_id": snapshot_id
+            },
+            {
+                headers: {
+                    Authorization: 'Bearer ' + access_token
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.log(error);
+        throw error;
+    }
+}
+
 app.get('/login', (req: any, res: any) => {
     let scope = 'user-read-private user-read-email playlist-modify-public playlist-modify-private'
 
@@ -111,9 +142,10 @@ app.get('/', (req: any, res: any) => {
 //Für die Playlist: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM
 //Für meinen User: https://api.spotify.com/v1/users/t6ijwf0r16yvskujumkyn78jx
 //Für die Tracks: https://api.spotify.com/v1/playlists/2L1Mq9vGReVgN08y3gMfQM/tracks
+//http://localhost:8088/test
 app.get('/test', async (req: any, res: any) => {
     try {
-        let data = await getPlaylistByID("2L1Mq9vGReVgN08y3gMfQM");
+        let data = await reorderPlaylistByID("2L1Mq9vGReVgN08y3gMfQM", 0, 1, 25);
         res.send(data);
     } catch (error) {
         res.status(500).send('Error fetching playlists');

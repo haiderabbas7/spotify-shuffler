@@ -1,13 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class PlaylistService {
-    constructor(private readonly httpService: HttpService) {}
+    constructor(
+        private readonly httpService: HttpService,
+        private readonly authService: AuthService,
+    ) {}
 
-    async getPlaylists(access_token: string): Promise<any> {
+    async getPlaylists(): Promise<any> {
         try {
+            const access_token = await this.authService.getAccessToken();
             const playlists = await lastValueFrom(
                 this.httpService.get('https://api.spotify.com/v1/me/playlists', {
                     headers: {
@@ -22,8 +27,9 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByID(access_token: string, id: string): Promise<any> {
+    async getPlaylistByID(id: string): Promise<any> {
         try {
+            const access_token = await this.authService.getAccessToken();
             const response = await lastValueFrom(
                 this.httpService.get(`https://api.spotify.com/v1/playlists/${id}`, {
                     headers: {
@@ -39,9 +45,9 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByName(access_token: string, name: string): Promise<any> {
+    async getPlaylistByName( name: string): Promise<any> {
         try {
-            const playlists = await this.getPlaylists(access_token);
+            const playlists = await this.getPlaylists();
             const playlist = playlists.items.find((playlist: any) => playlist.name === name);
             if (!playlist) {
                 throw new Error(`Playlist with name ${name} not found`);
@@ -54,30 +60,30 @@ export class PlaylistService {
     }
 
     async getPlaylist(
-        access_token: string,
         identifier: string,
         is_name: boolean = false,
     ): Promise<any> {
-        let data;
+        let data: any;
         if (is_name) {
-            data = await this.getPlaylistByName(access_token, identifier);
+            data = await this.getPlaylistByName(identifier);
         } else {
-            data = await this.getPlaylistByID(access_token, identifier);
+            data = await this.getPlaylistByID(identifier);
         }
         return data;
     }
 
+    /*TODO: prüf ob der shuffle auch für local songs geht. müsste aber eigentlich*/
+
     async reorderPlaylistByID(
-        access_token: string,
         playlist_id: string,
         range_start: number,
         insert_before: number,
         range_length: number = 1,
     ): Promise<any> {
         try {
-            //TODO: brauche ich snapshot ID überhaupt? weil das hier ist einfach noch ein await. wenn ja dann überleg dir was
             //const playlist_data = await this.getPlaylistByID(access_token, playlist_id);
             //const snapshot_id = playlist_data.snapshot_id;
+            const access_token = await this.authService.getAccessToken();
 
             const response = await lastValueFrom(
                 this.httpService.put(

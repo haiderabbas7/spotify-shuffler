@@ -6,17 +6,14 @@ import { ShuffleService } from './shuffle/shuffle.service';
 import { PlaylistService } from './playlist/playlist.service';
 import { TrackService } from './track/track.service';
 import * as querystring from 'node:querystring';
-import * as crypto from 'crypto';
 import { ConfigService } from '@nestjs/config';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-
+import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
 @Controller()
 export class AppController {
     private scope: any;
     private client_id: any;
     private redirect_uri: any;
-    private state: any;
     constructor(
         private readonly httpService: HttpService,
         private readonly authService: AuthService,
@@ -24,13 +21,14 @@ export class AppController {
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,
         private readonly configService: ConfigService,
-        @Inject(CACHE_MANAGER) private cacheManager: Cache
+        @Inject(CACHE_MANAGER) private cacheManager: Cache,
     ) {
-        this.scope = 'user-read-private user-read-email playlist-modify-public playlist-modify-private';
+        this.scope =
+            'user-read-private user-read-email playlist-modify-public playlist-modify-private';
         this.client_id = this.configService.get<string>('CLIENT_ID');
         this.redirect_uri = 'http://localhost:' + this.configService.get<string>('PORT') + '/';
-        this.state = crypto.randomBytes(16).toString('hex');
     }
+
 
     @Get()
     @Redirect()
@@ -43,28 +41,28 @@ export class AppController {
                     client_id: this.client_id,
                     scope: this.scope,
                     redirect_uri: this.redirect_uri + 'shuffle',
-                    state: this.state,
                 }),
         };
     }
 
     @Get('/shuffle')
     async shuffle(@Req() req: Request) {
-        const tokens = await this.authService.getTokens({
+        await this.authService.requestTokens({
             redirect_uri: this.redirect_uri + 'shuffle',
             code: req.query.code,
-            received_state: req.query.state,
         });
         console.time('shuffle');
-        await this.shuffleService.insertionShuffle(tokens.access_token, '4B2UOzffIG92Kh2PTPqgWi', 5);
+        await this.shuffleService.insertionShuffle('0BfYlDPlZlFpDlJxxGNGWi', 60);
         /*await this.playlistService.reorderPlaylistByID
             tokens.access_token,
             '4B2UOzffIG92Kh2PTPqgWi',
             25,
             1,
             )*/
+
         /*const daten = await this.trackService.getTrackByIndex(tokens.access_token, '4B2UOzffIG92Kh2PTPqgWi', 0)
         console.log(daten)*/
+
         console.timeEnd('shuffle');
     }
 

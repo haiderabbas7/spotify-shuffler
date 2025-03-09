@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class ShuffleService {
@@ -10,17 +11,17 @@ export class ShuffleService {
         private readonly httpService: HttpService,
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,
+        private readonly authService: AuthService,
     ) {
-        this.last_shuffle_amount = 0
+        this.last_shuffle_amount = 0;
     }
 
     async insertionShuffle(
-        access_token: string,
         playlist_id: string,
         shuffle_amount: any = null,
     ): Promise<any> {
         try {
-            const playlist = await this.playlistService.getPlaylistByID(access_token, playlist_id);
+            const playlist = await this.playlistService.getPlaylistByID(playlist_id);
             const playlist_size: number = playlist.tracks.total;
             console.log(`Shuffling playlist ${playlist.name}`);
             if (shuffle_amount === null) {
@@ -36,7 +37,6 @@ export class ShuffleService {
                     (i + this.last_shuffle_amount);
                 //const songname = (await this.trackService.getTrackByIndex(access_token, playlist_id, random_index)).track.name;
                 await this.playlistService.reorderPlaylistByID(
-                    access_token,
                     playlist_id,
                     random_index,
                     i,

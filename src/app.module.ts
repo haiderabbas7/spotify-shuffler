@@ -7,6 +7,9 @@ import { PlaylistService } from './playlist/playlist.service';
 import { TrackService } from './track/track.service';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
+import { OpenService } from './open/open.service';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MainService } from './main/main.service';
 
 @Module({
     imports: [
@@ -17,8 +20,16 @@ import { CacheModule } from '@nestjs/cache-manager';
         CacheModule.register({
             isGlobal: true,
         }),
+        ScheduleModule.forRoot(),
     ],
     controllers: [AppController],
-    providers: [ShuffleService, AuthService, PlaylistService, TrackService],
+    providers: [
+        ShuffleService,
+        AuthService,
+        PlaylistService,
+        TrackService,
+        OpenService,
+        MainService,
+    ],
 })
 export class AppModule {}

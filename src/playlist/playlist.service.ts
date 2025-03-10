@@ -10,11 +10,10 @@ export class PlaylistService {
         private readonly authService: AuthService,
     ) {}
 
-    /*TODO: gleiches ding hier wie bei der getTracksOfPlaylistByID methode, ob ich sie brauche
+    /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE SPÄTER WENN ICH MEHRERE PLAYLISTS SHUFFLEN WILL
      *  schreib die methode hier um für den fall dass man mehr als 50 playlists hat
      *  wie bei den tracks kann man nur 50 songs anfragen und muss mit nem offset arbeiten
      *  würde sagen hier kommen um einiges weniger daten an als wenn man alle tracks einer playlist anfragt
-     *  aber trotzdem kb mir die mühe zu machen wenn ich die methode nicht brauche
      *  */
     async getPlaylists(): Promise<any> {
         try {

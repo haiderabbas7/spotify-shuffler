@@ -10,6 +10,12 @@ export class PlaylistService {
         private readonly authService: AuthService,
     ) {}
 
+    /*TODO: gleiches ding hier wie bei der getTracksOfPlaylistByID methode, ob ich sie brauche
+     *  schreib die methode hier um für den fall dass man mehr als 50 playlists hat
+     *  wie bei den tracks kann man nur 50 songs anfragen und muss mit nem offset arbeiten
+     *  würde sagen hier kommen um einiges weniger daten an als wenn man alle tracks einer playlist anfragt
+     *  aber trotzdem kb mir die mühe zu machen wenn ich die methode nicht brauche
+     *  */
     async getPlaylists(): Promise<any> {
         try {
             const access_token = await this.authService.getAccessToken();
@@ -17,6 +23,8 @@ export class PlaylistService {
                 this.httpService.get('https://api.spotify.com/v1/me/playlists', {
                     headers: {
                         Authorization: 'Bearer ' + access_token,
+                    },
+                    params: {
                         limit: 50,
                     },
                 }),
@@ -27,13 +35,15 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByID(id: string): Promise<any> {
+    async getPlaylistByID(playlist_id: string): Promise<any> {
         try {
             const access_token = await this.authService.getAccessToken();
             const response = await lastValueFrom(
-                this.httpService.get(`https://api.spotify.com/v1/playlists/${id}`, {
+                this.httpService.get(`https://api.spotify.com/v1/playlists/${playlist_id}`, {
                     headers: {
                         Authorization: 'Bearer ' + access_token,
+                    },
+                    params: {
                         limit: 50,
                     },
                 }),
@@ -45,7 +55,7 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByName( name: string): Promise<any> {
+    async getPlaylistByName(name: string): Promise<any> {
         try {
             const playlists = await this.getPlaylists();
             const playlist = playlists.items.find((playlist: any) => playlist.name === name);
@@ -59,20 +69,9 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylist(
-        identifier: string,
-        is_name: boolean = false,
-    ): Promise<any> {
-        let data: any;
-        if (is_name) {
-            data = await this.getPlaylistByName(identifier);
-        } else {
-            data = await this.getPlaylistByID(identifier);
-        }
-        return data;
+    async getPlaylistSizeByID(playlist_id: string): Promise<number> {
+        return (await this.getPlaylistByID(playlist_id)).tracks.total;
     }
-
-    /*TODO: prüf ob der shuffle auch für local songs geht. müsste aber eigentlich*/
 
     async reorderPlaylistByID(
         playlist_id: string,
@@ -105,8 +104,6 @@ export class PlaylistService {
         } catch (error) {
             console.error(error);
             throw error;
-            //TODO: bau hier oder beim return darüber ein, dass Fehler wie 429 API rate limit zurückgegeben werden, damit ich sie an anderen Stellen behandeln kann
-            //  dafür vielleicht Exception logik? also dass ich die exceptions handle, und wenn nicht handled wird ein error geworfen
         }
     }
 }

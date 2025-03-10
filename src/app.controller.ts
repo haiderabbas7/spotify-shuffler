@@ -9,6 +9,7 @@ import * as querystring from 'node:querystring';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 
+
 @Controller()
 export class AppController {
     private scope: any;
@@ -28,7 +29,6 @@ export class AppController {
         this.client_id = this.configService.get<string>('CLIENT_ID');
         this.redirect_uri = 'http://localhost:' + this.configService.get<string>('PORT') + '/';
     }
-
 
     @Get()
     @Redirect()
@@ -52,7 +52,7 @@ export class AppController {
             code: req.query.code,
         });
         console.time('shuffle');
-        await this.shuffleService.insertionShuffle('0BfYlDPlZlFpDlJxxGNGWi', 60);
+        await this.shuffleService.insertionShuffle('4B2UOzffIG92Kh2PTPqgWi', 5);
         /*await this.playlistService.reorderPlaylistByID
             tokens.access_token,
             '4B2UOzffIG92Kh2PTPqgWi',
@@ -60,14 +60,22 @@ export class AppController {
             1,
             )*/
 
-        /*const daten = await this.trackService.getTrackByIndex(tokens.access_token, '4B2UOzffIG92Kh2PTPqgWi', 0)
-        console.log(daten)*/
+        /*await this.trackService.getTrackByIndex('0BfYlDPlZlFpDlJxxGNGWi', 1000)
+        console.log(JSON.stringify(daten, null, 2)); // 2 für bessere Lesbarkeit
+        console.log("AAAAAAAAAAAAAAAAAAAA")
+        await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+        await this.trackService.getTrackByIndex('0BfYlDPlZlFpDlJxxGNGWi', 1000)
+        console.log("BBBBBBBBBBBBBBBBBBBB")
+        await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+        await this.trackService.getTrackByIndex('0BfYlDPlZlFpDlJxxGNGWi', 1000)*/
 
         console.timeEnd('shuffle');
     }
 
     @Get('/test')
-    getHello(): string {
-        return 'test!';
+    async test(@Req() req: Request) {
+        //const { default: open } = await import('open');
+        //await open('https://google.com');
+        await (await this.shuffleService.getOpen())('https://google.com')
     }
 }

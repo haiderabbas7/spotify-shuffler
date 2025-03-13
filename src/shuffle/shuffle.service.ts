@@ -24,15 +24,20 @@ export class ShuffleService {
             //wenn kein shuffle amount angegeben, dann einfach gesamte playlist shufflen
             if (shuffle_amount === null) {
                 //FALL keine shuffle amount angegeben, wir versuchen default_shuffle_amount anzahl an songs zu shufflen, sonst die gesamte playlist
-                shuffle_amount = playlist_size >= default_shuffle_amount ? default_shuffle_amount : playlist_size;
-            }
-            else {
+                shuffle_amount =
+                    playlist_size >= default_shuffle_amount
+                        ? default_shuffle_amount
+                        : playlist_size;
+            } else {
                 //FALL shuffle amount angegeben. Wenn hier shuffle amoutn zu groß, dann auf playlist_size beschränken, sonst lassen
-                shuffle_amount = shuffle_amount >= playlist_size + 1 ? playlist_size : shuffle_amount
+                shuffle_amount =
+                    shuffle_amount >= playlist_size + 1 ? playlist_size : shuffle_amount;
             }
             while (successful_shuffles < shuffle_amount) {
                 //random number from interval [successful_shuffles; playlist_size-1]
-                const random_index = Math.floor(Math.random() * (playlist_size - successful_shuffles)) + successful_shuffles;
+                const random_index =
+                    Math.floor(Math.random() * (playlist_size - successful_shuffles)) +
+                    successful_shuffles;
                 //const songname = (await this.trackService.getTrackByIndex(access_token, playlist_id, random_index)).track.name;
                 try {
                     await this.playlistService.reorderPlaylistByID(

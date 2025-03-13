@@ -2,33 +2,64 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { UserService } from '../user/user.service';
+import { HelperService } from '../helper/helper.service';
+import { TrackService } from '../track/track.service';
 
 @Injectable()
 export class PlaylistService {
     constructor(
         private readonly httpService: HttpService,
         private readonly authService: AuthService,
+        private readonly userService: UserService,
+        private readonly helperService: HelperService,
+        private readonly trackService: TrackService,
     ) {}
 
-    /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE SPÄTER WENN ICH MEHRERE PLAYLISTS SHUFFLEN WILL
-     *  schreib die methode hier um für den fall dass man mehr als 50 playlists hat
-     *  wie bei den tracks kann man nur 50 songs anfragen und muss mit nem offset arbeiten
-     *  würde sagen hier kommen um einiges weniger daten an als wenn man alle tracks einer playlist anfragt
-     *  */
-    async getPlaylists(): Promise<any> {
+    isOwnPlaylist(playlist: any): boolean {
+        const user_id: any = this.userService.getUserID();
+        return playlist.owner.id == user_id;
+    }
+
+    //TODO: MUSST TESTEN OB DIESE METHODE FUNKTIONIERT
+    async getListenedPlaylists(date?: Date){
+        const optionalDate: Date = date ?? this.helperService.getDateXMinutesBack();
+        const listenedTracks: any = await this.trackService.getRecentlyPlayedTracks(optionalDate);
+        let playlistIDs: Set<string> = new Set<string>();
+        for(const track of listenedTracks){
+            if(track.context && track.context.type === "playlist" && track.context.uri){
+                //Entfernt den kram am anfang und lässt nur die ID übrig
+                const currentPlaylistId = track.context.uri.replace("spotify:playlist:", "");
+                playlistIDs.add(currentPlaylistId)
+            }
+        }
+        //wieder in ein Array umwandeln, hab ich von GPT. Sets speichern an sich schon keine doppelten Einträge
+        return [...playlistIDs];
+    }
+
+
+
+    //TODO: wandel diese methode ganz einfach um dass der den /me endpunkt nutzt
+    //  weil an anderen stellen benutze ich auch den me endpunkt, weil es keinen user endpunkt gibt
+    //FUNKTIONIERT, BRAUCHT UM DIE 200 BIS 500 MS
+    async getOwnPlaylists(): Promise<any> {
         try {
-            const access_token = await this.authService.getAccessToken();
-            const playlists = await lastValueFrom(
-                this.httpService.get('https://api.spotify.com/v1/me/playlists', {
-                    headers: {
-                        Authorization: 'Bearer ' + access_token,
-                    },
-                    params: {
-                        limit: 50,
-                    },
-                }),
-            );
-            return playlists.data;
+            const user_id: any = this.userService.getUserID();
+            let playlists: any[] = [];
+            let nextURL: string = `https://api.spotify.com/v1/users/${user_id}/playlists?offset=0&limit=20`;
+            do {
+                const access_token = await this.authService.getAccessToken();
+                const { data } = await lastValueFrom(
+                    this.httpService.get(nextURL, {
+                        headers: {
+                            Authorization: 'Bearer ' + access_token,
+                        },
+                    }),
+                );
+                nextURL = data.next;
+                playlists = playlists.concat(data.items);
+            } while (nextURL !== null);
+            return playlists.filter((playlist) => this.isOwnPlaylist(playlist));
         } catch (error) {
             console.error(error);
         }
@@ -56,7 +87,7 @@ export class PlaylistService {
 
     async getPlaylistByName(name: string): Promise<any> {
         try {
-            const playlists = await this.getPlaylists();
+            const playlists = await this.getOwnPlaylists();
             const playlist = playlists.items.find((playlist: any) => playlist.name === name);
             if (!playlist) {
                 throw new Error(`Playlist with name ${name} not found`);

@@ -7,7 +7,6 @@ import { PlaylistService } from './playlist/playlist.service';
 import { TrackService } from './track/track.service';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
-import { OpenService } from './open/open.service';
 import * as querystring from 'node:querystring';
 
 @Controller()
@@ -23,8 +22,8 @@ export class AppController {
         private readonly trackService: TrackService,
         private readonly configService: ConfigService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
-        private readonly openService: OpenService,
     ) {
+        //TODO: optimiere die scopes hier, wirf die raus die ich nicht brauch und pack vllt neue rein
         this.scope =
             'user-read-private user-read-email playlist-modify-public playlist-modify-private';
         this.client_id = this.configService.get<string>('CLIENT_ID');
@@ -84,13 +83,4 @@ export class AppController {
     //TODO: mach hier eine route shuffle, womit ich das shuffling ganz einfach selber anstoßen kann
 
     //OPTIONAL TODO: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert
-
-    @Get('/test')
-    async test(@Req() req: Request) {
-        //const { default: open } = await import('open');
-        //await open('https://google.com');
-        await (
-            await this.openService.getOpen()
-        )('https://google.com');
-    }
 }

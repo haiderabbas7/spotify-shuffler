@@ -7,9 +7,10 @@ import { PlaylistService } from './playlist/playlist.service';
 import { TrackService } from './track/track.service';
 import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
-import { OpenService } from './open/open.service';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MainService } from './main/main.service';
+import { UserService } from './user/user.service';
+import { HelperService } from './helper/helper.service';
 
 @Module({
     imports: [
@@ -28,8 +29,9 @@ import { MainService } from './main/main.service';
         AuthService,
         PlaylistService,
         TrackService,
-        OpenService,
         MainService,
+        UserService,
+        HelperService,
     ],
 })
 export class AppModule {}

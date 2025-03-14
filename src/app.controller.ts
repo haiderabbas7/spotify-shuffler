@@ -23,7 +23,7 @@ export class AppController {
         private readonly trackService: TrackService,
         private readonly configService: ConfigService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
-        private readonly mainService: MainService
+        private readonly mainService: MainService,
     ) {
         //TODO: optimiere die scopes hier, wirf die raus die ich nicht brauch und pack vllt neue rein
         this.scope =
@@ -55,7 +55,7 @@ export class AppController {
         });
 
         //TODO: mach das hier später weg, war nur zum testen. aber ist ne gute idee um eine methode direkt aufzurufen
-        await this.mainService.testMain()
+        await this.mainService.testMain();
 
         /*TODO: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/

@@ -1,9 +1,9 @@
 import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { PlaylistService } from '../playlist/playlist.service';
 import { HelperService } from '../helper/helper.service';
+import { SpotifyApiService } from '../spotify-api/spotify-api.service';
 
 @Injectable()
 export class TrackService {
@@ -14,6 +14,7 @@ export class TrackService {
         @Inject(forwardRef(() => PlaylistService))
         private readonly playlistService: PlaylistService,
         private readonly helperService: HelperService,
+        private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
     /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
@@ -21,44 +22,19 @@ export class TrackService {
      *   also um alle songs einer zb 1000+ songs playlist zu bekommen brauche ich viele calls und viel zeit
      *   die methode ist möglich und kann ich auch easy umsetzen, aber viel mehr ob die methode nen richtigen nutzen hat du weißt*/
     async getTracksOfPlaylistByID(id: string): Promise<any> {
-        try {
-            const access_token = await this.authService.getAccessToken();
-            const response = await lastValueFrom(
-                this.httpService.get(`https://api.spotify.com/v1/playlists/${id}/tracks`, {
-                    headers: {
-                        Authorization: 'Bearer ' + access_token,
-                    },
-                    params: {
-                        limit: 50,
-                    },
-                }),
-            );
-            return response.data;
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
+        return await this.spotifyApiService.sendGetCall(`playlists/${id}/tracks`, { limit: 50 });
     }
 
     async getTrackByIndex(playlist_id: string, index: number): Promise<any> {
         try {
-            const access_token = await this.authService.getAccessToken();
             const playlist_size = await this.playlistService.getPlaylistSizeByID(playlist_id);
             if (index === playlist_size) {
                 throw new Error(`Index ${index} is out of bounds`);
             }
-            const response = await firstValueFrom(
-                this.httpService.get(`https://api.spotify.com/v1/playlists/${playlist_id}/tracks`, {
-                    headers: {
-                        Authorization: 'Bearer ' + access_token,
-                    },
-                    params: {
-                        limit: 1,
-                        offset: index,
-                    },
-                }),
-            );
-            return response.data;
+            return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}/tracks`, {
+                limit: 1,
+                offset: index,
+            });
         } catch (error) {
             console.error(error);
             throw error;
@@ -109,19 +85,11 @@ export class TrackService {
             const current_date: Date = new Date();
             const past_date: Date =
                 end_date ?? new Date(current_date.getTime() - 2 * 60 * 60 * 1000);
-            const access_token = await this.authService.getAccessToken();
             const final_tracks: any[] = [];
-            const { data } = await lastValueFrom(
-                this.httpService.get(
-                    `https://api.spotify.com/v1/me/player/recently-played?limit=50&after=${unix_timestamp_now}`,
-                    {
-                        headers: {
-                            Authorization: 'Bearer ' + access_token,
-                        },
-                    },
-                ),
+            const received_tracks: any = await this.spotifyApiService.sendGetCall(
+                `me/player/recently-played?limit=50&after=${unix_timestamp_now}`,
             );
-            for (const track of data.items) {
+            for (const track of received_tracks.items) {
                 const track_played_at = new Date(track.played_at);
                 if (track_played_at >= past_date) {
                     final_tracks.push(track);

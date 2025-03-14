@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { HelperService } from '../helper/helper.service';
 import { ShuffleService } from '../shuffle/shuffle.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
 import { UserService } from '../user/user.service';
@@ -28,7 +27,9 @@ export class MainService {
         console.time('shuffle');
         //await this.shuffleService.insertionShuffle('4B2UOzffIG92Kh2PTPqgWi', 5);
         //const test = await this.playlistService.getListenedPlaylists();
-        const test = await this.userService.getCurrentlyPlayingPlaylist();
+        //const test = await this.userService.getCurrentlyPlayingPlaylist();
+        //const test = await this.trackService.getTrackByIndex('4B2UOzffIG92Kh2PTPqgWi', 2)
+        const test = await this.playlistService.getOwnPlaylists();
         console.log(test);
         console.timeEnd('shuffle');
     }

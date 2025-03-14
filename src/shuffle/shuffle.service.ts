@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
 import { AuthService } from '../auth/auth.service';
@@ -7,7 +6,6 @@ import { AuthService } from '../auth/auth.service';
 @Injectable()
 export class ShuffleService {
     constructor(
-        private readonly httpService: HttpService,
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,
         private readonly authService: AuthService,

@@ -5,6 +5,7 @@ import { AuthService } from '../auth/auth.service';
 import { UserService } from '../user/user.service';
 import { HelperService } from '../helper/helper.service';
 import { TrackService } from '../track/track.service';
+import { SpotifyApiService } from '../spotify-api/spotify-api.service';
 
 @Injectable()
 export class PlaylistService {
@@ -16,6 +17,7 @@ export class PlaylistService {
         //das löst die Circular Dependency mit TrackService auf, von Copilot und Nest docs
         @Inject(forwardRef(() => TrackService))
         private readonly trackService: TrackService,
+        private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
     isOwnPlaylist(playlist: any): boolean {
@@ -61,15 +63,11 @@ export class PlaylistService {
         try {
             const user_id: any = this.userService.getUserID();
             let playlists: any[] = [];
-            let nextURL: string = `https://api.spotify.com/v1/users/${user_id}/playlists?offset=0&limit=20`;
+            //let nextURL: string = `https://api.spotify.com/v1/users/${user_id}/playlists?offset=0&limit=20`;
+            let nextURL: string = `users/${user_id}/playlists?offset=0&limit=20`;
             do {
-                const access_token = await this.authService.getAccessToken();
-                const { data } = await lastValueFrom(
-                    this.httpService.get(nextURL, {
-                        headers: {
-                            Authorization: 'Bearer ' + access_token,
-                        },
-                    }),
+                const data: any = await this.spotifyApiService.sendGetCall(
+                    nextURL.replace('https://api.spotify.com/v1/', ''),
                 );
                 nextURL = data.next;
                 playlists = playlists.concat(data.items);
@@ -81,23 +79,9 @@ export class PlaylistService {
     }
 
     async getPlaylistByID(playlist_id: string): Promise<any> {
-        try {
-            const access_token = await this.authService.getAccessToken();
-            const { data } = await lastValueFrom(
-                this.httpService.get(`https://api.spotify.com/v1/playlists/${playlist_id}`, {
-                    headers: {
-                        Authorization: 'Bearer ' + access_token,
-                    },
-                    params: {
-                        limit: 50,
-                    },
-                }),
-            );
-            return data;
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
+        return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}`, {
+            limit: 50,
+        });
     }
 
     async getPlaylistByName(name: string): Promise<any> {
@@ -152,8 +136,8 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistNameByID(playlist_id: string): Promise<string>{
-        try{
+    async getPlaylistNameByID(playlist_id: string): Promise<string> {
+        try {
             const playlist: any = await this.getPlaylistByID(playlist_id);
             return playlist.name;
         } catch (error) {

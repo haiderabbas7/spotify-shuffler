@@ -1,22 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, forwardRef, Inject } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom, from, lastValueFrom } from 'rxjs';
+import { firstValueFrom, lastValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { PlaylistService } from '../playlist/playlist.service';
 import { HelperService } from '../helper/helper.service';
-import unix_timestamp from 'unix-timestamp';
-import * as stream from 'node:stream';
 
 @Injectable()
 export class TrackService {
     constructor(
         private readonly httpService: HttpService,
         private readonly authService: AuthService,
+        //das löst die Circular Dependency mit PlaylistService auf, von Copilot und Nest docs
+        @Inject(forwardRef(() => PlaylistService))
         private readonly playlistService: PlaylistService,
         private readonly helperService: HelperService,
-    ) {
-        unix_timestamp.round = true
-    }
+    ) {}
 
     /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
      *   weil durch die nature des endpoints kann ich maximal nur 50 songs auf einmal anfragen
@@ -67,12 +65,16 @@ export class TrackService {
         }
     }
 
-    //TODO: MUSST TESTEN OB DIESE METHODE FUNKTIONIERT
+    //TODO: die methode ist nicht schlecht, aber der Endpoint funktioniert nicht mehr so wie er soll
+    //  behalt die Methode fürs erste noch
     //wenn kein Date angegeben so wird das Datum vor zwei Stunden genommen
-    async getRecentlyPlayedTracks(date?: Date){
+    /*async getRecentlyPlayedTracks(date?: Date){
         try {
+            const unix_timestamp = await this.helperService.getUnixTimestamp()
             const optionalDate = date ?? this.helperService.getDateXMinutesBack()
+            console.log("date:" + optionalDate)
             const timestamp = unix_timestamp.fromDate(optionalDate);
+            console.log("timestamp: " + timestamp)
             let tracks: any[] = [];
             let nextURL: string = `https://api.spotify.com/v1/me/player/recently-played?limit=50&after=${timestamp}`
             do {
@@ -93,5 +95,46 @@ export class TrackService {
             console.error(error);
             throw error;
         }
+    }*/
+
+    /**
+     * Angepasste methode für den kaputte unzuverlässigen endpoint
+     * basically man gibt ein end_date an und die methode liefert alle Tracks, die zwischen JETZT und diesem end date gehört wurden
+     * gibt man kein enddate, so werden einfach die songs returned, die in den letzten zwei stunden gehört wurden
+     * */
+    async getRecentlyPlayedTracks(end_date?: Date): Promise<any> {
+        try {
+            const unix_timestamp = await this.helperService.getUnixTimestamp();
+            const unix_timestamp_now = unix_timestamp.now();
+            const current_date: Date = new Date();
+            const past_date: Date =
+                end_date ?? new Date(current_date.getTime() - 2 * 60 * 60 * 1000);
+            const access_token = await this.authService.getAccessToken();
+            const final_tracks: any[] = [];
+            const { data } = await lastValueFrom(
+                this.httpService.get(
+                    `https://api.spotify.com/v1/me/player/recently-played?limit=50&after=${unix_timestamp_now}`,
+                    {
+                        headers: {
+                            Authorization: 'Bearer ' + access_token,
+                        },
+                    },
+                ),
+            );
+            for (const track of data.items) {
+                const track_played_at = new Date(track.played_at);
+                if (track_played_at >= past_date) {
+                    final_tracks.push(track);
+                }
+            }
+            return final_tracks;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
+
+    /* TODO: schreib hier eine methode isLocalSong, welches für ein Track objekt returned, ob es ein local file ist
+        ganz einfach damit ich es an anderen stellen nutzen kann
+     */
 }

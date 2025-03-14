@@ -11,6 +11,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MainService } from './main/main.service';
 import { UserService } from './user/user.service';
 import { HelperService } from './helper/helper.service';
+import { SpotifyApiService } from './spotify-api/spotify-api.service';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { HelperService } from './helper/helper.service';
         MainService,
         UserService,
         HelperService,
+        SpotifyApiService,
     ],
 })
 export class AppModule {}

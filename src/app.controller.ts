@@ -8,6 +8,7 @@ import { TrackService } from './track/track.service';
 import { ConfigService } from '@nestjs/config';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import * as querystring from 'node:querystring';
+import { MainService } from './main/main.service';
 
 @Controller()
 export class AppController {
@@ -22,10 +23,11 @@ export class AppController {
         private readonly trackService: TrackService,
         private readonly configService: ConfigService,
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
+        private readonly mainService: MainService
     ) {
         //TODO: optimiere die scopes hier, wirf die raus die ich nicht brauch und pack vllt neue rein
         this.scope =
-            'user-read-private user-read-email playlist-modify-public playlist-modify-private';
+            'user-read-playback-state user-read-recently-played user-read-private user-read-email playlist-modify-public playlist-modify-private';
         this.client_id = this.configService.get<string>('CLIENT_ID');
         this.redirect_uri = 'http://localhost:' + this.configService.get<string>('PORT') + '/';
     }
@@ -51,6 +53,9 @@ export class AppController {
             redirect_uri: this.redirect_uri + 'start',
             code: req.query.code,
         });
+
+        //TODO: mach das hier später weg, war nur zum testen. aber ist ne gute idee um eine methode direkt aufzurufen
+        await this.mainService.testMain()
 
         /*TODO: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/

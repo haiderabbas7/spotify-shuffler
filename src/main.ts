@@ -11,9 +11,9 @@ async function bootstrap() {
     const port = configService.get('PORT');
     //Hiermit wird direkt die index route geöffnet, funktioniert auch wenn der await listen call erst danach kommt
     //TODO: kommentiere das folgende aus wenn ich die anwendung für mich launchen will idfk
-    /*await (
+    await (
         await openService.getOpen()
-    )('http://localhost:777/');*/
+    )('http://localhost:777/');
     await server_app.listen(port);
 }
 bootstrap();

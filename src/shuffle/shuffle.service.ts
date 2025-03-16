@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
 import { AuthService } from '../auth/auth.service';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class ShuffleService {
@@ -9,7 +10,28 @@ export class ShuffleService {
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,
         private readonly authService: AuthService,
+        private readonly userService: UserService,
     ) {}
+
+    //FUNKTIONIERT
+    async determinePlaylistsToShuffle(): Promise<string[]> {
+        const shuffle_these_playlists: Set<string> = new Set<string>([
+            '0BfYlDPlZlFpDlJxxGNGWi', //Rock
+            '41yP6x49QBGMdkNN7ATj5Y', //Citypop weil hat viele Local songs
+        ]);
+
+        const listened_playlists: string[] = await this.playlistService.getOwnListenedPlaylists();
+        for (const listened_playlist of listened_playlists) {
+            shuffle_these_playlists.add(listened_playlist);
+        }
+
+        const currently_playing_playlist: any =
+            await this.userService.getCurrentlyPlayingPlaylist();
+        if (currently_playing_playlist !== '') {
+            shuffle_these_playlists.delete(currently_playing_playlist);
+        }
+        return [...shuffle_these_playlists];
+    }
 
     async insertionShuffle(playlist_id: string, shuffle_amount: any = null): Promise<any> {
         try {
@@ -18,6 +40,7 @@ export class ShuffleService {
             let successful_shuffles: number = 0;
             const playlist = await this.playlistService.getPlaylistByID(playlist_id);
             const playlist_size: number = playlist.tracks.total;
+            let snapshot_id: string = playlist.snapshot_id;
             console.log(`Shuffling playlist ${playlist.name}`);
             //wenn kein shuffle amount angegeben, dann einfach gesamte playlist shufflen
             if (shuffle_amount === null) {
@@ -38,10 +61,11 @@ export class ShuffleService {
                     successful_shuffles;
                 //const songname = (await this.trackService.getTrackByIndex(access_token, playlist_id, random_index)).track.name;
                 try {
-                    await this.playlistService.reorderPlaylistByID(
+                    snapshot_id = await this.playlistService.reorderPlaylistByID(
                         playlist_id,
                         random_index,
                         successful_shuffles,
+                        snapshot_id,
                     );
                     //Wenn shuffle kein Error auslöst, dann erst wird successful_shuffle inkrementiert und back_off_time resetted
                     successful_shuffles++;

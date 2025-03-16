@@ -18,9 +18,7 @@ export class TrackService {
     ) {}
 
     /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
-     *   weil durch die nature des endpoints kann ich maximal nur 50 songs auf einmal anfragen
-     *   also um alle songs einer zb 1000+ songs playlist zu bekommen brauche ich viele calls und viel zeit
-     *   die methode ist möglich und kann ich auch easy umsetzen, aber viel mehr ob die methode nen richtigen nutzen hat du weißt*/
+     *  guck bei playlist wie das da gemacht wurde, ist ez as fuck*/
     async getTracksOfPlaylistByID(id: string): Promise<any> {
         return await this.spotifyApiService.sendGetCall(`playlists/${id}/tracks`, { limit: 50 });
     }
@@ -80,15 +78,17 @@ export class TrackService {
      * */
     async getRecentlyPlayedTracks(end_date?: Date): Promise<any> {
         try {
-            const unix_timestamp = await this.helperService.getUnixTimestamp();
-            const unix_timestamp_now = unix_timestamp.now();
+            const unix_timestamp_now = (await this.helperService.getUnixTimestamp()).now();
+
             const current_date: Date = new Date();
             const past_date: Date =
                 end_date ?? new Date(current_date.getTime() - 2 * 60 * 60 * 1000);
+
             const final_tracks: any[] = [];
             const received_tracks: any = await this.spotifyApiService.sendGetCall(
                 `me/player/recently-played?limit=50&after=${unix_timestamp_now}`,
             );
+
             for (const track of received_tracks.items) {
                 const track_played_at = new Date(track.played_at);
                 if (track_played_at >= past_date) {

@@ -19,10 +19,8 @@ export class AuthService {
     }
 
     async getAccessToken(): Promise<any> {
-        console.log('Getting access token...');
         let access_token: string | null = await this.cacheManager.get('access_token');
         if (access_token === null) {
-            console.log('Refreshing token...');
             access_token = await this.refreshToken();
         }
         return access_token;
@@ -30,7 +28,6 @@ export class AuthService {
 
     async requestTokens(data: any) {
         try {
-            console.log('Requesting first tokens...');
             const post_data = querystring.stringify({
                 grant_type: 'authorization_code',
                 code: data.code,

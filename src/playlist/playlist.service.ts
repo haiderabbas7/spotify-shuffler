@@ -41,22 +41,31 @@ export class PlaylistService {
         return [...playlistIDs];
     }*/
 
-    async getListenedPlaylists(end_date?: Date) {
+    async getOwnListenedPlaylists(end_date?: Date): Promise<string[]> {
+        const x_hours_back: number = 10;
         const current_date: Date = new Date();
-        const optional_end_date = end_date ?? new Date(current_date.getTime() - 2 * 60 * 60 * 1000);
-        const listened_tracks: any =
-            await this.trackService.getRecentlyPlayedTracks(optional_end_date);
+        const optional_end_date = end_date ?? new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
+        const listened_tracks: any = await this.trackService.getRecentlyPlayedTracks(optional_end_date);
         const playlist_ids: Set<string> = new Set<string>();
+
+        //DIESER STEP IST WICHTIG! dadurch dass ich immer neu frage, welche playlists ich habe, werden keine gelöschten geshuffled
+        const ownPlaylists = await this.getOwnPlaylists();
+
+        // Abgleich mit den Playlists, die der Nutzer gehört hat
         for (const track of listened_tracks) {
             if (track.context && track.context.type === 'playlist' && track.context.uri) {
-                playlist_ids.add(this.helperService.extractIDfromSpotifyURI(track.context.uri));
+                const playlist_id = this.helperService.extractIDfromSpotifyURI(track.context.uri);
+                //er fügt die playlist_id nur ein, wenn es meine eigene playlist ist
+                if (ownPlaylists.some(playlist => playlist.id === playlist_id)) {
+                    playlist_ids.add(playlist_id);
+                }
             }
         }
-        //wieder in ein Array umwandeln, hab ich von GPT. Sets speichern an sich schon keine doppelten Einträge
         return [...playlist_ids];
     }
 
-    //TODO: wandel diese methode ganz einfach um dass der den /me endpunkt nutzt
+
+    //TODO: wandel diese methode ganz einfach um dass sie den /me endpunkt nutzt damit einheitlich
     //  weil an anderen stellen benutze ich auch den me endpunkt, weil es keinen user endpunkt gibt
     //FUNKTIONIERT, BRAUCHT UM DIE 200 BIS 500 MS
     async getOwnPlaylists(): Promise<any> {
@@ -106,22 +115,22 @@ export class PlaylistService {
         playlist_id: string,
         range_start: number,
         insert_before: number,
+        snapshot_id: string = "",
         range_length: number = 1,
+
     ): Promise<any> {
         try {
-            //const playlist_data = await this.getPlaylistByID(access_token, playlist_id);
-            //const snapshot_id = playlist_data.snapshot_id;
             const access_token = await this.authService.getAccessToken();
 
             const response = await lastValueFrom(
                 this.httpService.put(
                     `https://api.spotify.com/v1/playlists/${playlist_id}/tracks`,
                     {
-                        range_start: range_start,
-                        range_length: range_length,
-                        insert_before: insert_before,
-                        //snapshot_id: snapshot_id,
-                    },
+                        range_start,
+                        range_length,
+                        insert_before,
+                        //wenn snapshot_id gesetzt, dann wird es eingefügt
+                        ...(snapshot_id && { snapshot_id }),},
                     {
                         headers: {
                             Authorization: `Bearer ${access_token}`,

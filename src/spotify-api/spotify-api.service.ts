@@ -3,23 +3,30 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { AuthService } from '../auth/auth.service';
 import { HelperService } from '../helper/helper.service';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, max } from 'rxjs';
+import { AxiosError } from 'axios';
+import { response } from 'express';
+import { dateTimestampProvider } from 'rxjs/internal/scheduler/dateTimestampProvider';
 
 @Injectable()
 export class SpotifyApiService {
+    private readonly max_attempts: number = 3;
+    private readonly start_backoff_time: number = 1;
     constructor(
         private readonly configService: ConfigService,
         private readonly httpService: HttpService,
         private readonly authService: AuthService,
         private readonly helperService: HelperService,
-    ) {}
+    ) {
+    }
 
     //TODO: mach hier methoden für die weiteren HTTP methoden wie POST, DELETE oder PUT wenn notwendig
 
-    async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+    //meine eigene methode ohne error handling, funktioniert
+    /*async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
         try {
             const access_token = await this.authService.getAccessToken();
-            const { data } = await firstValueFrom(
+            const response = await firstValueFrom(
                 this.httpService.get(`https://api.spotify.com/v1/${endpoint}`, {
                     headers: {
                         Authorization: `Bearer ${access_token}`,
@@ -27,10 +34,70 @@ export class SpotifyApiService {
                     params,
                 }),
             );
-            return data;
+
+            console.log(endpoint + ":  " + response.status)
+            //returne
+            if (response.status >= 200 && response.status <= 299) {
+                return {
+                    data: response.data,
+                    status: response.status,
+                };
+            }
+
         } catch (error) {
             console.error(`Fehler beim API-Call an ${endpoint}:`, error);
             throw error;
+        }
+    }*/
+
+    async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
+        let back_off_time = this.start_backoff_time; // Startwert für Backoff
+        let access_token = await this.authService.getAccessToken(); // Token einmalig holen
+
+        for (let attempts: number = 1; attempts <= this.max_attempts; attempts++) {
+            try {
+                const response = await firstValueFrom(
+                    this.httpService.get(`https://api.spotify.com/v1/${endpoint}`, {
+                        headers: { Authorization: `Bearer ${access_token}` },
+                        params,
+                    }),
+                );
+
+                if (response.status >= 200 && response.status < 300) {
+                    /*return {
+                        data: response.data,
+                        status: response.status,
+                    };*/
+                    return response.data;
+                }
+
+                // Fällt in den Bereich 400-599 und ist kein 2xx Status
+                throw new Error(`API call failed with status ${response.status}`);
+            } catch (error) {
+                //TODO: error handling hab ich von GPT, idk ob das funktioniert sieht aber gut aus. idfk teste vllt
+                const axiosError = error as AxiosError;
+                const status = axiosError.response?.status;
+
+                if (status === 401) {
+                    // Token erneuern
+                    console.log('Token abgelaufen, hole neues Token...');
+                    access_token = await this.authService.getAccessToken();
+                /*} else if (status === 404) {
+                    // Behandle 404 hier, ohne zu werfen
+                    return { data: null, status: 404 }; // oder was auch immer du zurückgeben möchtest*/
+                } else if (status === 429 || status === 500) {
+                    // Exponential Backoff
+                    const wait_time = back_off_time * Math.pow(2, attempts - 1);
+                    console.log(`Rate Limit/Timeout, warte ${wait_time}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, wait_time));
+                } else {
+                    console.error(`Unbekannter Fehler (${status}):`, axiosError.response?.data);
+                    throw error;
+                }
+            }
+
+            // Wenn alle Versuche fehlschlagen:
+            throw new Error(`Maximale Anzahl an Versuchen erreicht für ${endpoint}`);
         }
     }
 }

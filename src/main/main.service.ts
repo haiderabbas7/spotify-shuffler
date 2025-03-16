@@ -29,13 +29,17 @@ export class MainService {
         //const test = await this.playlistService.getListenedPlaylists();
         //const test = await this.userService.getCurrentlyPlayingPlaylist();
         //const test = await this.trackService.getTrackByIndex('4B2UOzffIG92Kh2PTPqgWi', 2)
-        const test = await this.playlistService.getOwnPlaylists();
-        console.log(test);
+        //const test = await this.playlistService.getOwnPlaylists();
+        //const test = await this.shuffleService.determinePlaylistsToShuffle()
+        await this.startShuffleApplication();
+        //console.log(test);
         console.timeEnd('shuffle');
     }
 
     async startShuffleApplication() {
-        /*TODO: füg hier VOR dem shufflen ganz einfach ein, dass er nicht shufflen soll, wenn ich gerade musik höre
-         *  ganz einfach die eine methode vom userService abfragen und mit einer if bedingung abfrühstücken*/
+        const playlists_to_shuffle: string[] = await this.shuffleService.determinePlaylistsToShuffle();
+        for(const playlist of playlists_to_shuffle){
+            await this.shuffleService.insertionShuffle(playlist)
+        }
     }
 }

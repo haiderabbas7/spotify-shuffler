@@ -19,10 +19,11 @@ export class UserService {
         return this.configService.get<string>('MY_USER_ID');
     }
 
+    //FUNKTIONIERT
     async getCurrentlyPlayingPlaylist(): Promise<string | null> {
         try {
-            const data: any = this.spotifyApiService.sendGetCall(`v1/me/player`);
-            if (data.is_playing && data.context && data.context.type === 'playlist') {
+            const data: any = await this.spotifyApiService.sendGetCall(`me/player`);
+            if (data.is_playing && data.context.type === 'playlist') {
                 return this.helperService.extractIDfromSpotifyURI(data.context.uri);
             } else {
                 return null;

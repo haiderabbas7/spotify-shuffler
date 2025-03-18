@@ -1,6 +1,5 @@
-import { Injectable, forwardRef, Inject } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { UserService } from '../user/user.service';
 import { HelperService } from '../helper/helper.service';
@@ -25,7 +24,7 @@ export class PlaylistService {
         return playlist.owner.id == user_id;
     }
 
-    //TODO: gleiches ding wie die alte getRecentlyListenedTracks in trackservice
+    //FIX: gleiches ding wie die alte getRecentlyListenedTracks in trackservice
     /*async getListenedPlaylists(date?: Date){
         const optionalDate: Date = date ?? this.helperService.getDateXMinutesBack();
         const listenedTracks: any = await this.trackService.getRecentlyPlayedTracks(optionalDate);
@@ -42,13 +41,15 @@ export class PlaylistService {
     }*/
 
     async getOwnListenedPlaylists(end_date?: Date): Promise<string[]> {
-        const x_hours_back: number = 10;
+        const x_hours_back: number = 5;
         const current_date: Date = new Date();
-        const optional_end_date = end_date ?? new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
-        const listened_tracks: any = await this.trackService.getRecentlyPlayedTracks(optional_end_date);
+        const optional_end_date =
+            end_date ?? new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
+        const listened_tracks: any =
+            await this.trackService.getRecentlyPlayedTracks(optional_end_date);
         const playlist_ids: Set<string> = new Set<string>();
 
-        //DIESER STEP IST WICHTIG! dadurch dass ich immer neu frage, welche playlists ich habe, werden keine gelöschten geshuffled
+        //DIESER STEP IST WICHTI.G! dadurch dass ich immer neu frage, welche playlists ich habe, werden keine gelöschten geshuffled
         const ownPlaylists = await this.getOwnPlaylists();
 
         // Abgleich mit den Playlists, die der Nutzer gehört hat
@@ -56,7 +57,7 @@ export class PlaylistService {
             if (track.context && track.context.type === 'playlist' && track.context.uri) {
                 const playlist_id = this.helperService.extractIDfromSpotifyURI(track.context.uri);
                 //er fügt die playlist_id nur ein, wenn es meine eigene playlist ist
-                if (ownPlaylists.some(playlist => playlist.id === playlist_id)) {
+                if (ownPlaylists.some((playlist) => playlist.id === playlist_id)) {
                     playlist_ids.add(playlist_id);
                 }
             }
@@ -64,9 +65,8 @@ export class PlaylistService {
         return [...playlist_ids];
     }
 
-
-    //TODO: wandel diese methode ganz einfach um dass sie den /me endpunkt nutzt damit einheitlich
-    //  weil an anderen stellen benutze ich auch den me endpunkt, weil es keinen user endpunkt gibt
+    /*TODO: wandel diese methode ganz einfach um dass sie den /me endpunkt nutzt damit einheitlich
+       weil an anderen stellen benutze ich auch den me endpunkt, weil es keinen user endpunkt gibt*/
     //FUNKTIONIERT, BRAUCHT UM DIE 200 BIS 500 MS
     async getOwnPlaylists(): Promise<any> {
         try {
@@ -88,9 +88,7 @@ export class PlaylistService {
     }
 
     async getPlaylistByID(playlist_id: string): Promise<any> {
-        return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}`, {
-            limit: 50,
-        });
+        return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}`);
     }
 
     async getPlaylistByName(name: string): Promise<any> {
@@ -111,7 +109,7 @@ export class PlaylistService {
         return (await this.getPlaylistByID(playlist_id)).tracks.total;
     }
 
-    async reorderPlaylistByID(
+    /*async reorderPlaylistByID(
         playlist_id: string,
         range_start: number,
         insert_before: number,
@@ -129,7 +127,7 @@ export class PlaylistService {
                         range_start,
                         range_length,
                         insert_before,
-                        //wenn snapshot_id gesetzt, dann wird es eingefügt
+
                         ...(snapshot_id && { snapshot_id }),},
                     {
                         headers: {
@@ -139,6 +137,26 @@ export class PlaylistService {
                 ),
             );
             return response.data;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }*/
+    async reorderPlaylistByID(
+        playlist_id: string,
+        range_start: number,
+        insert_before: number,
+        snapshot_id: string = '',
+        range_length: number = 1,
+    ): Promise<string> {
+        try {
+            return await this.spotifyApiService.sendPutCall(`playlists/${playlist_id}/tracks`, {
+                range_start,
+                range_length,
+                insert_before,
+                //wenn snapshot_id gesetzt, dann wird es eingefügt
+                ...(snapshot_id && { snapshot_id }),
+            });
         } catch (error) {
             console.error(error);
             throw error;

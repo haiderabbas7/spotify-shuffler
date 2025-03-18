@@ -17,7 +17,7 @@ export class TrackService {
         private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
-    /*TODO: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
+    /*WICHTIG: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
      *  guck bei playlist wie das da gemacht wurde, ist ez as fuck*/
     async getTracksOfPlaylistByID(id: string): Promise<any> {
         return await this.spotifyApiService.sendGetCall(`playlists/${id}/tracks`, { limit: 50 });
@@ -38,38 +38,6 @@ export class TrackService {
             throw error;
         }
     }
-
-    //TODO: die methode ist nicht schlecht, aber der Endpoint funktioniert nicht mehr so wie er soll
-    //  behalt die Methode fürs erste noch
-    //wenn kein Date angegeben so wird das Datum vor zwei Stunden genommen
-    /*async getRecentlyPlayedTracks(date?: Date){
-        try {
-            const unix_timestamp = await this.helperService.getUnixTimestamp()
-            const optionalDate = date ?? this.helperService.getDateXMinutesBack()
-            console.log("date:" + optionalDate)
-            const timestamp = unix_timestamp.fromDate(optionalDate);
-            console.log("timestamp: " + timestamp)
-            let tracks: any[] = [];
-            let nextURL: string = `https://api.spotify.com/v1/me/player/recently-played?limit=50&after=${timestamp}`
-            do {
-                const access_token = await this.authService.getAccessToken();
-                const { data } = await lastValueFrom(
-                    this.httpService.get(nextURL, {
-                        headers: {
-                            Authorization: 'Bearer ' + access_token,
-                        },
-                    }),
-                );
-                nextURL = data.next;
-                tracks = tracks.concat(data.items)
-            } while (nextURL !== null);
-            return tracks;
-        }
-        catch (error) {
-            console.error(error);
-            throw error;
-        }
-    }*/
 
     /**
      * Angepasste methode für den kaputte unzuverlässigen endpoint
@@ -103,6 +71,5 @@ export class TrackService {
     }
 
     /* TODO: schreib hier eine methode isLocalSong, welches für ein Track objekt returned, ob es ein local file ist
-        ganz einfach damit ich es an anderen stellen nutzen kann
-     */
+        ganz einfach damit ich es an anderen stellen nutzen kann*/
 }

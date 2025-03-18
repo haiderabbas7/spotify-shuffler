@@ -27,7 +27,7 @@ export class AuthService {
     }
 
     async requestTokens(data: any) {
-        try {
+        /*try {
             const post_data = querystring.stringify({
                 grant_type: 'authorization_code',
                 code: data.code,
@@ -52,11 +52,18 @@ export class AuthService {
             ]);
         } catch (error) {
             console.error(error);
-        }
+        }*/
+        await this.finalizePostCall(
+            querystring.stringify({
+                grant_type: 'authorization_code',
+                code: data.code,
+                redirect_uri: data.redirect_uri,
+            }),
+        );
     }
 
     async refreshToken(): Promise<any> {
-        try {
+        /*try {
             const post_data = querystring.stringify({
                 grant_type: 'refresh_token',
                 refresh_token: await this.cacheManager.get('refresh_token'),
@@ -79,8 +86,48 @@ export class AuthService {
                 this.cacheManager.set('refresh_token', response.data.refresh_token),
             ]);
             return response.data.access_token;
+
+        } catch (error) {
+            console.error(error);
+        }*/
+        return await this.finalizePostCall(
+            querystring.stringify({
+                grant_type: 'refresh_token',
+                refresh_token: await this.cacheManager.get('refresh_token'),
+            }),
+        );
+    }
+
+    private async finalizePostCall(post_data: any): Promise<any> {
+        try {
+            const response = await lastValueFrom(
+                this.httpService.post('https://accounts.spotify.com/api/token', post_data, {
+                    headers: {
+                        Authorization:
+                            'Basic ' +
+                            Buffer.from(this.client_id + ':' + this.client_secret).toString(
+                                'base64',
+                            ),
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }),
+            );
+            //access token is limited to 60 minutes in spotify API
+            /*await Promise.all([
+                this.cacheManager.set('access_token', response.data.access_token, 59 * 60 * 1000),
+                this.cacheManager.set('refresh_token', response.data.refresh_token),
+            ]);*/
+            await this.cacheTokens(response.data);
+            return response.data.access_token;
         } catch (error) {
             console.error(error);
         }
+    }
+
+    private async cacheTokens(data: any) {
+        await Promise.all([
+            this.cacheManager.set('access_token', data.access_token, 59 * 60 * 1000),
+            this.cacheManager.set('refresh_token', data.refresh_token),
+        ]);
     }
 }

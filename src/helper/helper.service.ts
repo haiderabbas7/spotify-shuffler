@@ -28,7 +28,6 @@ export class HelperService {
     extractIDfromSpotifyURI(uri: string): string {
         return uri.replace('spotify:playlist:', '');
     }
-
-    //TODO: schreib hier vllt nach bedarf eine Methode, die Date objekte in meine Timezone umrechnet
-    // guck dafür in txt meine notizen um zu wissen wie ich umrechnen muss und so
+    /*OPTIONAL: schreib hier vllt nach bedarf eine Methode, die Date objekte in meine Timezone umrechnet
+        guck dafür in txt meine notizen um zu wissen wie ich umrechnen muss und so*/
 }

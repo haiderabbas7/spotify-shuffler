@@ -25,9 +25,7 @@ export class AppController {
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
         private readonly mainService: MainService,
     ) {
-        //TODO: optimiere die scopes hier, wirf die raus die ich nicht brauch und pack vllt neue rein
-        this.scope =
-            'user-read-playback-state user-read-recently-played user-read-private user-read-email playlist-modify-public playlist-modify-private';
+        this.scope = 'user-read-playback-state user-read-recently-played playlist-modify-public playlist-modify-private';
         this.client_id = this.configService.get<string>('CLIENT_ID');
         this.redirect_uri = 'http://localhost:' + this.configService.get<string>('PORT') + '/';
     }
@@ -48,14 +46,14 @@ export class AppController {
     }
 
     @Get('/start')
-    async shuffle(@Req() req: Request) {
+    async startApplication(@Req() req: Request) {
         await this.authService.requestTokens({
             redirect_uri: this.redirect_uri + 'start',
             code: req.query.code,
         });
 
         //TODO: mach das hier später weg, war nur zum testen. aber ist ne gute idee um eine methode direkt aufzurufen
-        await this.mainService.testMain();
+        this.mainService.testMain();
 
         /*TODO: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/
@@ -66,26 +64,29 @@ export class AppController {
             <title>My Spotify Shuffler</title>
             <style>
                 body {
-                    background-color: #333; /* Dunkelgrauer Hintergrund */
-                    color: white; /* Weiße Schriftfarbe */
-                    display: flex; /* Flexbox für zentrierte Ausrichtung */
-                    justify-content: center; /* Horizontale Zentrierung */
-                    align-items: center; /* Vertikale Zentrierung */
-                    height: 100vh; /* Volle Höhe des Viewports */
-                    margin: 0; /* Kein Margin */
-                    font-size: 2em; /* Große Schriftgröße */
+                    background-color: #333;
+                    color: white;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100vh;
+                    margin: 0;
+                    font-size: 2em;
                     font-family: Papyrus,serif;
                 }
             </style>
         </head>
         <body>
-            <p>Close the window vro...</p>
+            <p>Close the tab vro...👅👅👅👅👅</p>
         </body>
         </html>
     `;
     }
 
-    //TODO: mach hier eine route shuffle, womit ich das shuffling ganz einfach selber anstoßen kann
+    @Get('/shuffle')
+    async shuffle(@Req() req: Request){
+        this.mainService.startShuffleApplication()
+    }
 
-    //OPTIONAL TODO: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert
+    //OPTIONAL: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert
 }

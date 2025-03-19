@@ -26,43 +26,13 @@ export class MainService {
     //@Cron(CronExpression.EVERY_10_SECONDS)
     async testMain() {
         console.time('shuffle');
-        //await this.shuffleService.insertionShuffle('4B2UOzffIG92Kh2PTPqgWi', 5);
-        //const test = await this.playlistService.getListenedPlaylists();
-        //const test = await this.userService.getCurrentlyPlayingPlaylist();
-        //const test = await this.trackService.getTrackByIndex('4B2UOzffIG92Kh2PTPqgWi', 2)
-        //const test = await this.playlistService.getOwnPlaylists();
-        //const test = await this.shuffleService.determinePlaylistsToShuffle()
-
-
-        /*const playlist_old = await this.playlistService.getPlaylistByID('4B2UOzffIG92Kh2PTPqgWi')
-        const snapshot_id_old = playlist_old.snapshot_id
-        const current_date_old: Date = new Date();
-        console.log(current_date_old + ": " + snapshot_id_old);
-
-        await this.shuffleService.shufflePlaylist('4B2UOzffIG92Kh2PTPqgWi')
-
-        const playlist = await this.playlistService.getPlaylistByID('4B2UOzffIG92Kh2PTPqgWi')
-        const snapshot_id = playlist.snapshot_id
-        const current_date: Date = new Date();
-        console.log(current_date + ": " + snapshot_id);*/
-
-
-        //NEUER SNAPSHOT ID TEST
-        /*const playlist = await this.playlistService.getPlaylistByID('4B2UOzffIG92Kh2PTPqgWi')
-        const snapshot_id = playlist.snapshot_id
-        const current_date: Date = new Date();
-        console.log(current_date + ": " + snapshot_id);
-        await this.playlistService.reorderPlaylistByID('4B2UOzffIG92Kh2PTPqgWi', 5, 2)
-        const playlist_new = await this.playlistService.getPlaylistByID('4B2UOzffIG92Kh2PTPqgWi')
-        const snapshot_id_new = playlist_new.snapshot_id
-        const current_date_new: Date = new Date();
-        console.log(current_date_new + ": " + snapshot_id_new);*/
-
-        await this.startShuffleApplication();
+        const test = await this.trackService.getTracksOfPlaylistByID('41yP6x49QBGMdkNN7ATj5Y')
+        console.log(test)
+        //await this.startShuffleApplication();
         console.timeEnd('shuffle');
     }
 
-    //TODO: hier kommt die Cron expression von einer stunde dran
+    @Cron(CronExpression.EVERY_2_HOURS)
     async startShuffleApplication() {
         const playlists_to_shuffle: string[] = await this.shuffleService.determinePlaylistsToShuffle();
         if (playlists_to_shuffle === undefined || playlists_to_shuffle.length == 0) {
@@ -76,8 +46,6 @@ export class MainService {
             }
         }
     }
-
-    @Cron(CronExpression.EVERY_30_SECONDS)
     async testBackground(){
         await (
             await this.helperService.getOpen()

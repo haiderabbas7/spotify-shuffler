@@ -24,22 +24,6 @@ export class PlaylistService {
         return playlist.owner.id == user_id;
     }
 
-    //FIX: gleiches ding wie die alte getRecentlyListenedTracks in trackservice
-    /*async getListenedPlaylists(date?: Date){
-        const optionalDate: Date = date ?? this.helperService.getDateXMinutesBack();
-        const listenedTracks: any = await this.trackService.getRecentlyPlayedTracks(optionalDate);
-        let playlistIDs: Set<string> = new Set<string>();
-        for(const track of listenedTracks){
-            if(track.context && track.context.type === "playlist" && track.context.uri){
-                //Entfernt den kram am anfang und lässt nur die ID übrig
-                const currentPlaylistId = track.context.uri.replace("spotify:playlist:", "");
-                playlistIDs.add(currentPlaylistId)
-            }
-        }
-        //wieder in ein Array umwandeln, hab ich von GPT. Sets speichern an sich schon keine doppelten Einträge
-        return [...playlistIDs];
-    }*/
-
     async getOwnListenedPlaylists(end_date?: Date): Promise<string[]> {
         const x_hours_back: number = 5;
         const current_date: Date = new Date();

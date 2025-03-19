@@ -30,7 +30,7 @@ export class ShuffleService {
         }
         const snapshot_id: string = await this.insertionShuffle(playlist, shuffle_amount);
 
-        //TODO: hier weitermachen mit persistierung von daten und so
+        //WICHTIG: hier weitermachen mit persistierung von shuffle history und snapshotid, logging usw
     }
 
     //FUNKTIONIERT

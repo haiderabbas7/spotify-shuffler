@@ -17,10 +17,21 @@ export class TrackService {
         private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
-    /*WICHTIG: IMPLEMENTIERE DIESE METHODE, ICH BRAUCHE SIE BEIM ROULETTE PRINZIP DING
-     *  guck bei playlist wie das da gemacht wurde, ist ez as fuck*/
-    async getTracksOfPlaylistByID(id: string): Promise<any> {
-        return await this.spotifyApiService.sendGetCall(`playlists/${id}/tracks`, { limit: 50 });
+    async getTracksOfPlaylistByID(playlist_id: string): Promise<any> {
+        try {
+            let tracks: any[] = [];
+            let nextURL: string = `playlists/${playlist_id}/tracks`
+            do{
+                const data: any = await this.spotifyApiService.sendGetCall(
+                    nextURL.replace('https://api.spotify.com/v1/', ''),
+                );
+                nextURL = data.next;
+                tracks = tracks.concat(data.items)
+            } while (nextURL !== null);
+            return tracks;
+        } catch (error) {
+            console.error(error);
+        }
     }
 
     async getTrackByIndex(playlist_id: string, index: number): Promise<any> {
@@ -40,7 +51,7 @@ export class TrackService {
     }
 
     /**
-     * Angepasste methode für den kaputte unzuverlässigen endpoint
+     * Angepasste methode für den kaputten unzuverlässigen endpoint
      * basically man gibt ein end_date an und die methode liefert alle Tracks, die zwischen JETZT und diesem end date gehört wurden
      * gibt man kein enddate, so werden einfach die songs returned, die in den letzten zwei stunden gehört wurden
      * */

@@ -33,7 +33,7 @@ export class PlaylistService {
             await this.trackService.getRecentlyPlayedTracks(optional_end_date);
         const playlist_ids: Set<string> = new Set<string>();
 
-        //DIESER STEP IST WICHTI.G! dadurch dass ich immer neu frage, welche playlists ich habe, werden keine gelöschten geshuffled
+        //DIESER STEP IST WICHTIG! dadurch dass ich immer neu frage, welche playlists ich habe, werden keine gelöschten geshuffled
         const ownPlaylists = await this.getOwnPlaylists();
 
         // Abgleich mit den Playlists, die der Nutzer gehört hat
@@ -71,8 +71,15 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByID(playlist_id: string): Promise<any> {
-        return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}`);
+    async getPlaylistByIDOnlyNecessaryInfo(playlist_id: string){
+        return await this.getPlaylistByID(playlist_id, "name,snapshot_id,tracks(total)")
+    }
+
+    async getPlaylistByID(playlist_id: string, fields: string = ''): Promise<any> {
+        return await this.spotifyApiService.sendGetCall(
+            `playlists/${playlist_id}`,
+            { ...(fields && { fields }) }
+        );
     }
 
     async getPlaylistByName(name: string): Promise<any> {
@@ -93,39 +100,6 @@ export class PlaylistService {
         return (await this.getPlaylistByID(playlist_id)).tracks.total;
     }
 
-    /*async reorderPlaylistByID(
-        playlist_id: string,
-        range_start: number,
-        insert_before: number,
-        snapshot_id: string = "",
-        range_length: number = 1,
-
-    ): Promise<any> {
-        try {
-            const access_token = await this.authService.getAccessToken();
-
-            const response = await lastValueFrom(
-                this.httpService.put(
-                    `https://api.spotify.com/v1/playlists/${playlist_id}/tracks`,
-                    {
-                        range_start,
-                        range_length,
-                        insert_before,
-
-                        ...(snapshot_id && { snapshot_id }),},
-                    {
-                        headers: {
-                            Authorization: `Bearer ${access_token}`,
-                        },
-                    },
-                ),
-            );
-            return response.data;
-        } catch (error) {
-            console.error(error);
-            throw error;
-        }
-    }*/
     async reorderPlaylistByID(
         playlist_id: string,
         range_start: number,

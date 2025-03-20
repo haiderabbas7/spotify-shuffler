@@ -18,6 +18,31 @@ export class HelperService {
         return module.default;
     }
 
+    /**
+     * Mein "eigener" weighted random object algo (hab ich vom package weighted-random-object geklaut)
+     * man gibt einfach ein array an Elementen ein, wobei jedes Element ein attribut weight enthalten soll
+     * und er gibt dir ein zufälliges objekt zurück OHNE ES ZU ENTFERNEN
+     */
+    getWeightedRandom(objects: any[]) {
+        // Berechne das Gesamtgewicht
+        const totalWeight = objects.reduce((agg, object) => agg + object.weight, 0);
+
+        // Generiere eine Zufallszahl im Bereich des Gesamtgewichts
+        const randomNumber = Math.random() * totalWeight;
+
+        // Finde das Objekt, dessen Gewicht die Zufallszahl überschreitet
+        let weightSum = 0;
+        return objects.find((object) => {
+            weightSum += object.weight;
+            return randomNumber <= weightSum;
+        });
+    }
+
+    /*async getLodash(): Promise<any> {
+        const module = await (eval(`import('lodash')`) as Promise<any>);
+        return module.default;
+    }*/
+
     //funktioniert, weniger als 1ms
     getDateXMinutesBack(minutes: number = 120): Date {
         const date = new Date();
@@ -28,6 +53,7 @@ export class HelperService {
     extractIDfromSpotifyURI(uri: string): string {
         return uri.replace('spotify:playlist:', '');
     }
+
     /*OPTIONAL: schreib hier vllt nach bedarf eine Methode, die Date objekte in meine Timezone umrechnet
         guck dafür in txt meine notizen um zu wissen wie ich umrechnen muss und so*/
 }

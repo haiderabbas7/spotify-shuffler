@@ -17,16 +17,21 @@ export class TrackService {
         private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
-    async getTracksOfPlaylistByID(playlist_id: string): Promise<any> {
+    async getTracksOfPlaylistByIDOnlyNecessaryInfo(playlist_id: string) {
+        return await this.getTracksOfPlaylistByID(playlist_id, 'next,items(is_local,track(uri))');
+    }
+
+    async getTracksOfPlaylistByID(playlist_id: string, fields: string = ''): Promise<any> {
         try {
             let tracks: any[] = [];
-            let nextURL: string = `playlists/${playlist_id}/tracks`
-            do{
+            let nextURL: string = `playlists/${playlist_id}/tracks`;
+            do {
                 const data: any = await this.spotifyApiService.sendGetCall(
                     nextURL.replace('https://api.spotify.com/v1/', ''),
+                    { ...(fields && { fields }) },
                 );
                 nextURL = data.next;
-                tracks = tracks.concat(data.items)
+                tracks = tracks.concat(data.items);
             } while (nextURL !== null);
             return tracks;
         } catch (error) {

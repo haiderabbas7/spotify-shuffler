@@ -25,7 +25,8 @@ export class AppController {
         @Inject(CACHE_MANAGER) private cacheManager: Cache,
         private readonly mainService: MainService,
     ) {
-        this.scope = 'user-read-playback-state user-read-recently-played playlist-modify-public playlist-modify-private';
+        this.scope =
+            'user-read-playback-state user-read-recently-played playlist-modify-public playlist-modify-private';
         this.client_id = this.configService.get<string>('CLIENT_ID');
         this.redirect_uri = 'http://localhost:' + this.configService.get<string>('PORT') + '/';
     }
@@ -84,8 +85,8 @@ export class AppController {
     }
 
     @Get('/shuffle')
-    async shuffle(@Req() req: Request){
-        this.mainService.startShuffleApplication()
+    async shuffle(@Req() req: Request) {
+        this.mainService.startShuffleApplication();
     }
 
     //OPTIONAL: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert

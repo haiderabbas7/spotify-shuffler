@@ -1,0 +1,114 @@
+{
+  "playlists": [
+    {
+      "playlist_id": "4B2UOzffIG92Kh2PTPqgWi",
+      "snapshot_id": "",
+      "tracks": [
+        {
+          "uri": "spotify:track:2SuyyRbbciDBXEZerQ6PE1",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:7t1FUkqJRdQdNrkjwfhq2H",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4WRObjXa0sC21wa3laZI1o",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:6E1ejRJAfE8BC4T1Dc8DNo",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:76owXCPDaZVFNDmxEG4lV6",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:275keYpPKRdTP0J1ctG9Ca",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:3hpB5SlyESKXrmc6NUNQhd",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4fPFfvvegZQ12DIH1t3y4G",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:2FQviMkaoixlgWuGL4u1EO",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:2QuKpAI5kmgdwCbApdB4wT",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4jnyL0WIJB0iRRPFNj1BeL",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4Dk7gOIyslQ5tTkapDfYGh",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:2iyEvZdipDeCmSW8v8PA32",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:6DwF5IUONr6L0aSmxYyT0V",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:2qgTvtCVbQ18SQ4ZDVUlMB",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:7JiLZJlFMVANgEeBo7BvmL",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:6upnQQE6IwsgPgxASNt7GM",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:45jaPXs1EROGdFRtT0T8Sx",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:3ynqGo5QvzIvKnfAahXatd",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4db54JOdAm7OnDqjpWy1uj",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:1fckVDRsaql38b9GfMjZ6x",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:7BaQc1OYz1gMedTlMRRhkT",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:2BWQIsuarfRoeqmnPvRO97",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:5YUyW9opqNsMSEzzecZih1",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:3e9z7v3fc6KBXACJwj0St1",
+          "weight": 50
+        },
+        {
+          "uri": "spotify:track:4L8rZacefAFsbYBI6iqQgz",
+          "weight": 50
+        }
+      ]
+    }
+  ]
+}

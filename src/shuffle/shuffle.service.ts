@@ -151,7 +151,7 @@ export class ShuffleService {
 
 
             /*TODO: das shuffling ging durch für eine neue playlist, musst aber noch mit console logs gucken ob es richtig ist
-            *  und dann noch den viel schlimmeren code für shufflign einer schon mal geshuffleden playlist nachvollziehen*/
+            *  und dann noch den viel schlimmeren code für shufflign einer schon mal geshuffleden playlist testen und nachvollziehen*/
 
 
 

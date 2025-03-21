@@ -10,6 +10,7 @@ type Track = {
 type Playlist = {
     playlist_id: string;
     snapshot_id: string;
+    last_shuffled_tracks: Track[];
     tracks: Track[];
 };
 
@@ -41,7 +42,12 @@ export class LowDbService {
 
     async addPlaylist(playlist_id: string) {
         const db = await this.getDB();
-        const playlist: Playlist = { playlist_id: playlist_id, snapshot_id: "", tracks: [] };
+        const playlist: Playlist = {
+            playlist_id: playlist_id,
+            snapshot_id: '',
+            last_shuffled_tracks: [],
+            tracks: [],
+        };
         db.data.playlists.push(playlist);
         await db.write();
     }
@@ -56,23 +62,24 @@ export class LowDbService {
         }
     }
 
-    async getSnapshotID(playlist_id: string){
+    async getSnapshotID(playlist_id: string) {
         const db = await this.getDB();
         const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
 
         if (!playlist) {
             throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
         }
-        return playlist.snapshot_id
+        return playlist.snapshot_id;
     }
 
-    async setSnapshotID(playlist_id: string, snapshot_id: string){
+    async setSnapshotID(playlist_id: string, snapshot_id: string) {
         const db = await this.getDB();
         const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
         if (!playlist) {
             throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
         }
-        playlist.snapshot_id = snapshot_id
+        playlist.snapshot_id = snapshot_id;
+        await db.write();
     }
 
     async addTrack(playlist_id: string, uri: string, weight: number) {
@@ -85,17 +92,6 @@ export class LowDbService {
         playlist.tracks.push({ uri: uri, weight: weight });
         await db.write();
     }
-
-    /*async setTracks(playlist_id: string, tracks: any[]) {
-        const db = await this.getDB();
-        const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
-
-        if (!playlist) {
-            throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
-        }
-        playlist.tracks = tracks;
-        await db.write();
-    }*/
 
     async updateWeight(playlist_id: string, uri: string, weight: number) {
         const db = await this.getDB();
@@ -143,6 +139,39 @@ export class LowDbService {
 
         // Entferne den Track aus der Playlist
         playlist.tracks.splice(trackIndex, 1);
+        await db.write();
+    }
+
+    async getLastShuffledTracks(playlist_id: string) {
+        const db = await this.getDB();
+        const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
+
+        if (!playlist) {
+            throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
+        }
+
+        return playlist.last_shuffled_tracks || [];
+    }
+
+    async clearLastShuffledTracks(playlist_id: string) {
+        const db = await this.getDB();
+        const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
+
+        if (!playlist) {
+            throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
+        }
+        playlist.last_shuffled_tracks = [];
+        await db.write();
+    }
+
+    async addShuffledTrack(playlist_id: string, uri: string, weight: number) {
+        const db = await this.getDB();
+        const playlist = db.data.playlists.find((playlist) => playlist.playlist_id === playlist_id);
+
+        if (!playlist) {
+            throw new Error(`Playlist mit der ID ${playlist_id} wurde nicht gefunden.`);
+        }
+        playlist.last_shuffled_tracks.push({ uri: uri, weight: weight });
         await db.write();
     }
 }

@@ -1,34 +1,28 @@
 import { Injectable } from '@nestjs/common';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
-import { AuthService } from '../auth/auth.service';
 import { UserService } from '../user/user.service';
 import { HelperService } from '../helper/helper.service';
 import { LowDbService } from '../low-db/low-db.service';
 import * as lodash from 'lodash';
+import { SpotifyApiService } from '../spotify-api/spotify-api.service';
 
 @Injectable()
 export class ShuffleService {
     private readonly default_shuffle_amount: number = 30;
-    private base_weight: number = 50;
+    private base_weight: number = 500;
     constructor(
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,
-        private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly helperService: HelperService,
         private readonly lowDBService: LowDbService,
+        private readonly spotifyApiService: SpotifyApiService,
     ) {}
 
     //FUNKTIONIERT
     async determinePlaylistsToShuffle(): Promise<string[]> {
         const shuffle_these_playlists: Set<string> = new Set<string>();
-        /*TODO: überleg ob ich manche playlists doch einfach per default shuffle idfk
-           ich habs fürs erste ausgestellt, weil es per track dynamik beim shufflen swayed: playlist wird geshuffled, obwohl nicht gehört*/
-        /*const shuffle_these_playlists: Set<string> = new Set<string>([
-            '0BfYlDPlZlFpDlJxxGNGWi', //Rock
-            '41yP6x49QBGMdkNN7ATj5Y', //Citypop weil hat viele Local songs
-        ]);*/
 
         const listened_playlists: string[] = await this.playlistService.getOwnListenedPlaylists();
         for (const listened_playlist of listened_playlists) {
@@ -43,205 +37,189 @@ export class ShuffleService {
         return [...shuffle_these_playlists];
     }
 
-    async dynamicWeightedShuffle(playlist_id: string, shuffle_amount: any = null) {
+    determineShuffleAmount(playlist_size: number, shuffle_amount: number = 0) {
+        return shuffle_amount === 0
+            ? Math.min(playlist_size, this.default_shuffle_amount)
+            : Math.min(shuffle_amount, playlist_size);
+    }
+
+    async dynamicWeightedShuffle(playlist_id: string, shuffle_amount: number = 0) {
+        //WICHTIG: laufzeit messen und bei bedarf optimierungen und refactoring machen, lies dazu die TODOs nach
+
+        /*TODO: ich frag hier einmal nur nach total, name und snapshot id und einmal nur nach den tracks
+         *  beide calls brauchen fast 6 sekunden, obwohl das fragen nach den tracks einfach 26 mehr calls sind
+         *  ich kann aber beim abfragen der playlists auch die tracks mit abfragen
+         *  guck ob ich das alles in einen call packen kann, vielleicht geht das ja schneller und ich kann mir die 6 sekunden sparen*/
+
+        /* TODO: ich kann safe die ein oder anderen awaits der lowdb aber auch so hier einsparen, indem ich alle sachen aufeinmal abrage
+            zb frag ich für jedes attribut wie last shuffle amount und snapshot id separat mit einem await ab */
+
+        const max_weight = 1000;
+        const min_weight = 50;
         const playlist = await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
-        const playlist_size = playlist.total;
-        const playlist_name = playlist.name;
-        console.log(`Shuffling playlist ${playlist_name}`);
-        let all_tracks = await this.trackService.getTracksOfPlaylistByIDOnlyNecessaryInfo(playlist_id);
-        if (shuffle_amount === null) {
-            //FALL keine shuffle amount angegeben, wir versuchen default_shuffle_amount anzahl an songs zu shufflen, sonst die gesamte playlist
-            shuffle_amount =
-                playlist_size >= this.default_shuffle_amount
-                    ? this.default_shuffle_amount
-                    : playlist_size;
-        } else {
-            //FALL shuffle amount angegeben. Wenn hier shuffle amount zu groß, dann auf playlist_size beschränken, sonst lassen
-            shuffle_amount = shuffle_amount >= playlist_size + 1 ? playlist_size : shuffle_amount;
-        }
+        this.helperService.printWithTimestamp(`Shuffling playlist "${playlist.name}`);
+        const playlist_size = playlist.tracks.total;
+
+        let new_snapshot_id = playlist.snapshot_id;
+        const all_tracks =
+            await this.trackService.getTracksOfPlaylistByIDOnlyNecessaryInfo(playlist_id);
         let final_weighted_tracks: any[];
-        const was_playlist_shuffled = await this.lowDBService.doesPlaylistExist(playlist_id)
-        const new_snapshot_id = playlist.snapshot_id;
+
+        shuffle_amount = this.determineShuffleAmount(playlist_size, shuffle_amount);
+
         //FALL playlist wurde schon mal geshuffled
-        if (was_playlist_shuffled) {
-
+        if (await this.lowDBService.doesPlaylistExist(playlist_id)) {
             let weighted_tracks = await this.lowDBService.getTracks(playlist_id);
-            const old_snapshot_id = (await this.lowDBService.getPlaylist(playlist_id))?.snapshot_id;
+
+            const old_snapshot_id = await this.lowDBService.getSnapshotID(playlist_id);
+
             if (new_snapshot_id !== old_snapshot_id) {
-                //TODO: der gesamte code hier in der if bedingung ist von gpt
-
-                // Berechne die Tracks, die hinzugefügt oder entfernt werden müssen
-                const weighted_tracks_uris = weighted_tracks.map((track) => track.uri);
-                const all_tracks_uris = all_tracks.map((item) => item.track.uri);
-
-                // Tracks, die in all_tracks sind, aber nicht in weighted_tracks (Hinzufügen)
-                const tracks_to_add = lodash
-                    .differenceBy(all_tracks, weighted_tracks, 'track.uri')
-                    .map((item) => ({
-                        uri: item.track.uri,
-                        weight: this.base_weight,
-                    }));
-
-                // Tracks, die in weighted_tracks sind, aber nicht in all_tracks (Löschen)
-                const tracks_to_remove = lodash.differenceBy(weighted_tracks, all_tracks, 'uri');
-
-                // Tracks zum Hinzufügen in weighted_tracks
-                for (const track of tracks_to_add) {
-                    await this.lowDBService.addTrack(playlist_id, track.uri, track.weight);
-                }
-
-                // Tracks zum Löschen aus weighted_tracks
-                for (const track of tracks_to_remove) {
-                    await this.lowDBService.removeTrack(playlist_id, track.uri);
-                }
-
-                // Jetzt könnte weighted_tracks aktualisiert werden, falls notwendig
-                weighted_tracks = await this.lowDBService.getTracks(playlist_id);
-            }
-            const shuffled_tracks = all_tracks.slice(this.default_shuffle_amount);
-
-            final_weighted_tracks = weighted_tracks.map(async (track) => {
-                //TODO: der gesamte code hier im map ist von gpt
-
-                // Wenn der Track in den letzten geshuffelten Tracks ist
-                const isInShuffledTracks = shuffled_tracks.some(
-                    (shuffledTrack) => shuffledTrack.track.uri === track.uri,
+                const all_tracks_reduced_to_uris: string[] = all_tracks.map(
+                    (track) => track.track.uri,
+                );
+                const weighted_tracks_reduced_to_uris: string[] = weighted_tracks.map(
+                    (track) => track.uri,
                 );
 
-                // Anpassung des Gewichts
-                if (isInShuffledTracks) {
-                    // Reduziere das Gewicht für Tracks, die im letzten Shuffle waren (z.B. halbieren)
-                    track.weight = Math.max(track.weight * 0.5, 1); // Verhindert, dass das Gewicht unter 1 fällt
-                } else {
-                    // Erhöhe das Gewicht für Tracks, die nicht im letzten Shuffle waren (z.B. um 10%)
-                    track.weight = Math.min(track.weight * 1.1, 100); // Verhindert, dass das Gewicht über 100 steigt
+                const tracks_to_add = lodash.difference(
+                    all_tracks_reduced_to_uris,
+                    weighted_tracks_reduced_to_uris,
+                );
+
+                const tracks_to_remove = lodash.difference(
+                    weighted_tracks_reduced_to_uris,
+                    all_tracks_reduced_to_uris,
+                );
+
+                for (const track of tracks_to_add) {
+                    await this.lowDBService.addTrack(playlist_id, track, this.base_weight);
                 }
-                await this.lowDBService.updateWeight(playlist_id, track.uri, track.weight)
-                return track;
-            });
+                for (const track of tracks_to_remove) {
+                    await this.lowDBService.removeTrack(playlist_id, track);
+                }
+
+                /*TODO: hier muss ich nicht die tracks einfügen/löschen und dann neu abfragen, ich kann die operationen auch direkt an weightedtracks machen
+                 *  aber dafür halt extra logik einführen idfk*/
+                weighted_tracks = await this.lowDBService.getTracks(playlist_id);
+            }
+            //holt sich die letzten geshuffleden tracks aus der lowdb und resetted sie dann
+            const last_shuffled_tracks = await this.lowDBService.getLastShuffledTracks(playlist_id);
+            await this.lowDBService.clearLastShuffledTracks(playlist_id);
+
+            for (const track of weighted_tracks) {
+                const isInShuffledTracks = last_shuffled_tracks.some(
+                    (shuffledTrack) => shuffledTrack.uri === track.uri,
+                );
+
+                if (isInShuffledTracks) {
+                    const new_weight = Math.round(Math.max(track.weight * 0.5, min_weight));
+                    await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
+                }
+                else {
+                    const new_weight = Math.round(Math.min(track.weight * 1.1, max_weight));
+                    await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
+                }
+            }
+
+            final_weighted_tracks = await this.lowDBService.getTracks(playlist_id);
         }
         //FALL playlist wurde noch nie geshuffled, daher kein eintrag in der lowdb
         else {
             await this.lowDBService.addPlaylist(playlist_id);
-            for(const track of all_tracks){
-                await this.lowDBService.addTrack(playlist_id, track.track.uri, this.base_weight)
+            for (const track of all_tracks) {
+                await this.lowDBService.addTrack(playlist_id, track.track.uri, this.base_weight);
             }
+            /*OPTIONAL: ich muss ja nicht die tracks neu von der lowdb anfragen
+            *  stattdessen kann ich sie auch einfach mit base weight lokal speichern und damit arbeiten
+            *  dadurch spare ich mir das await hier, was an sich viel ist glaube ich*/
             final_weighted_tracks = await this.lowDBService.getTracks(playlist_id);
         }
-        let snapshot_id_after_shuffle: string = new_snapshot_id;
-        for(let i = 0; i < shuffle_amount; i++){
+        for (let i = 0; i < shuffle_amount; i++) {
             const chosen_track = this.helperService.getWeightedRandom(final_weighted_tracks);
-            console.log(`track_index: ${chosen_track.uri}`)
-            // Finde den meepmoop des ausgewählten Tracks
-            const meepmoop = final_weighted_tracks.findIndex(track => track.uri === chosen_track.uri);
 
+            //Entfernt den track aus der roulette
+            const index_in_weighted = final_weighted_tracks.findIndex(
+                (track) => track.uri === chosen_track.uri,
+            );
+            final_weighted_tracks.splice(index_in_weighted, 1);
 
-            // Falls der Track gefunden wurde, entferne ihn
-            final_weighted_tracks.splice(meepmoop, 1);
-            for(const track of final_weighted_tracks){
-                console.log(track.uri);
-            }
-
-
-
-            const track_index = all_tracks.findIndex(track => track.track.uri === chosen_track.uri)
-            console.log(`track_index: ${track_index}`)
-
-
-
-
-            /*TODO: das shuffling ging durch für eine neue playlist, musst aber noch mit console logs gucken ob es richtig ist
-            *  und dann noch den viel schlimmeren code für shufflign einer schon mal geshuffleden playlist testen und nachvollziehen*/
-
-
-
-
-            snapshot_id_after_shuffle = await this.playlistService.reorderPlaylistByID(
+            //findet den track in all_tracks und macht damit das reordering
+            const track_index = all_tracks.findIndex(
+                (track) => track.track.uri === chosen_track.uri,
+            );
+            new_snapshot_id = await this.playlistService.reorderPlaylistByID(
                 playlist_id,
                 track_index,
                 i,
-                snapshot_id_after_shuffle,
+                new_snapshot_id,
             );
-            all_tracks.splice(i, 0, all_tracks.splice(track_index, 1)[0]); // Dies wird den Track an die i-te Position verschieben
-        }
 
-        await this.lowDBService.setSnapshotID(playlist_id, snapshot_id_after_shuffle);
+            //swapped den ausgewählten track in all_tracks nach vorne, damit die ermittlung der indizes konsistent bleibt
+            all_tracks.splice(i, 0, all_tracks.splice(track_index, 1)[0]);
+
+            //fügt den geshuffleden song zur lowdb hinzu für nächstes mal
+            /*OPTIONAL: hier könnte man ja die geshufflden tracks in einer variablen halten
+            *  und dann mit einer neuen methode direkt in einem stück in die lowdb schreiben
+            *  also nicht für N tracks N awaits sondern nur ein await
+            *  aber joa weiß nicht ob das so großartig viel performance increase gibt tbh*/
+            await this.lowDBService.addShuffledTrack(
+                playlist_id,
+                chosen_track.uri,
+                chosen_track.weight,
+            );
+        }
+        await this.lowDBService.setSnapshotID(playlist_id, new_snapshot_id);
     }
 
     async insertionShuffle(playlist_id: string, shuffle_amount: any = null): Promise<any> {
         const playlist = await this.playlistService.getPlaylistByID(playlist_id);
         const playlist_size: number = playlist.tracks.total;
         let snapshot_id: string = playlist.snapshot_id;
-        console.log(`Shuffling playlist ${playlist.name}`);
-        if (shuffle_amount === null) {
-            //FALL keine shuffle amount angegeben, wir versuchen default_shuffle_amount anzahl an songs zu shufflen, sonst die gesamte playlist
-            shuffle_amount =
-                playlist_size >= this.default_shuffle_amount
-                    ? this.default_shuffle_amount
-                    : playlist_size;
-        } else {
-            //FALL shuffle amount angegeben. Wenn hier shuffle amount zu groß, dann auf playlist_size beschränken, sonst lassen
-            shuffle_amount = shuffle_amount >= playlist_size + 1 ? playlist_size : shuffle_amount;
-        }
-        for (
-            let successful_shuffles: number = 0;
-            successful_shuffles < shuffle_amount;
-            successful_shuffles++
-        ) {
-            //random number from interval [successful_shuffles; playlist_size-1]
-            const random_index =
-                Math.floor(Math.random() * (playlist_size - successful_shuffles)) +
-                successful_shuffles;
+        this.helperService.printWithTimestamp(`Shuffling playlist "${playlist.name}`);
+        shuffle_amount = this.determineShuffleAmount(playlist_size, shuffle_amount);
+        for (let i: number = 0; i < shuffle_amount; i++) {
+            //random number from interval [i; playlist_size-1]
+            const random_index = Math.floor(Math.random() * (playlist_size - i)) + i;
             snapshot_id = await this.playlistService.reorderPlaylistByID(
                 playlist_id,
                 random_index,
-                successful_shuffles,
+                i,
                 snapshot_id,
             );
         }
     }
 
-    /*async shufflePlaylist(playlist_id: string, shuffle_amount: any = null) {
-        const playlist: any = await this.playlistService.getPlaylistByID(playlist_id);
-        const playlist_size: number = playlist.tracks.total;
-        console.log(`Shuffling playlist ${playlist.name}`);
-        if (shuffle_amount === null) {
-            //FALL keine shuffle amount angegeben, wir versuchen default_shuffle_amount anzahl an songs zu shufflen, sonst die gesamte playlist
-            shuffle_amount =
-                playlist_size >= this.default_shuffle_amount
-                    ? this.default_shuffle_amount
-                    : playlist_size;
-        } else {
-            //FALL shuffle amount angegeben. Wenn hier shuffle amount zu groß, dann auf playlist_size beschränken, sonst lassen
-            shuffle_amount = shuffle_amount >= playlist_size + 1 ? playlist_size : shuffle_amount;
-        }
-        const snapshot_id: string = await this.insertionShuffle(playlist, shuffle_amount);
+    async resetTestPlaylistCopy() {
+        await this.spotifyApiService.sendPutCall(`playlists/4B2UOzffIG92Kh2PTPqgWi/tracks`, {
+            uris: [
+                'spotify:track:2SuyyRbbciDBXEZerQ6PE1', //A
+                'spotify:track:7t1FUkqJRdQdNrkjwfhq2H', //B
+                'spotify:track:4WRObjXa0sC21wa3laZI1o', //C.
+                'spotify:track:6E1ejRJAfE8BC4T1Dc8DNo', //D
+                'spotify:track:76owXCPDaZVFNDmxEG4lV6', //E
+                'spotify:track:275keYpPKRdTP0J1ctG9Ca', //F
+                'spotify:track:3hpB5SlyESKXrmc6NUNQhd', //G
+                'spotify:track:4fPFfvvegZQ12DIH1t3y4G', //H
+                'spotify:track:2FQviMkaoixlgWuGL4u1EO', //I
+                'spotify:track:2QuKpAI5kmgdwCbApdB4wT', //J
+                'spotify:track:4jnyL0WIJB0iRRPFNj1BeL', //K
+                'spotify:track:4Dk7gOIyslQ5tTkapDfYGh', //L
+                'spotify:track:2iyEvZdipDeCmSW8v8PA32', //M
+                'spotify:track:6DwF5IUONr6L0aSmxYyT0V', //N
+                'spotify:track:2qgTvtCVbQ18SQ4ZDVUlMB', //O
+                'spotify:track:7JiLZJlFMVANgEeBo7BvmL', //P
+                'spotify:track:6upnQQE6IwsgPgxASNt7GM', //Q
+                'spotify:track:45jaPXs1EROGdFRtT0T8Sx', //R
+                'spotify:track:3ynqGo5QvzIvKnfAahXatd', //S
+                'spotify:track:4db54JOdAm7OnDqjpWy1uj', //T
+                'spotify:track:1fckVDRsaql38b9GfMjZ6x', //U
+                'spotify:track:7BaQc1OYz1gMedTlMRRhkT', //V
+                'spotify:track:2BWQIsuarfRoeqmnPvRO97', //W
+                'spotify:track:5YUyW9opqNsMSEzzecZih1', //X
+                'spotify:track:3e9z7v3fc6KBXACJwj0St1', //Y
+                'spotify:track:4L8rZacefAFsbYBI6iqQgz', //Z
+            ],
+        });
     }
-    async insertionShuffle(playlist: any, shuffle_amount: any = null): Promise<string> {
-        const playlist_id: string = playlist.id;
-        const playlist_size: number = playlist.tracks.total;
-        let snapshot_id: string = playlist.snapshot_id;
-        for (
-            let i: number = 0;
-            i < shuffle_amount;
-            i++
-        ) {
-            //random number from interval [i; playlist_size-1]
-            const random_index =
-                Math.floor(Math.random() * (playlist_size - i)) +
-                i;
 
-            //wenn random_index gleich i ist, dann würde der song an die gleiche stelle geswapped werden => wir sparen einen API call
-            if(random_index !== i){
-                snapshot_id = await this.playlistService.reorderPlaylistByID(
-                    playlist_id,
-                    random_index,
-                    i,
-                    snapshot_id,
-                );
-            }
-        }
-        //returned die letzte snapshot_id damit man vergleichen kann
-        return snapshot_id;
-    }*/
 }

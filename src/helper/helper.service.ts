@@ -38,11 +38,6 @@ export class HelperService {
         });
     }
 
-    /*async getLodash(): Promise<any> {
-        const module = await (eval(`import('lodash')`) as Promise<any>);
-        return module.default;
-    }*/
-
     //funktioniert, weniger als 1ms
     getDateXMinutesBack(minutes: number = 120): Date {
         const date = new Date();
@@ -54,6 +49,29 @@ export class HelperService {
         return uri.replace('spotify:playlist:', '');
     }
 
+    async wait(seconds: number) {
+        await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+    }
+
     /*OPTIONAL: schreib hier vllt nach bedarf eine Methode, die Date objekte in meine Timezone umrechnet
         guck dafür in txt meine notizen um zu wissen wie ich umrechnen muss und so*/
+
+    /*TODO: schreib eine methode welche den momentanen zeitpunkt mit einer nachricht printed
+     *  also ich gib der methode ne message und er printed: (DD.MM.YY HH:MM) message
+     *  dazu gucken wie ich das momentane datum mit new Date in das format bringen kann*/
+    printWithTimestamp(message: string) {
+        const now = new Date();
+        const formattedDate = now
+            .toLocaleString('de-DE', {
+                day: '2-digit',
+                month: '2-digit',
+                year: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+            })
+            .replace(',', ''); // Entfernt das Komma zwischen Datum und Uhrzeit
+
+        console.log(`(${formattedDate}) ${message}`);
+    }
 }

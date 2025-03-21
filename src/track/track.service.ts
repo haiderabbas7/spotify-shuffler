@@ -39,6 +39,23 @@ export class TrackService {
         }
     }
 
+    async searchTrackNameByURI(uri: string): Promise<string> {
+        //NORMAL: spotify:track:4L8rZacefAFsbYBI6iqQgz
+        //LOCAL:  spotify:local:David+Wise:Donkey+Kong+Country%3A+Tropical+Freeze:Snomads+Island:127
+        if (!uri.startsWith('spotify:')) {
+            throw new Error(`Wrong URI format: ${uri}`);
+        } else {
+            const track_id = uri.substring(14);
+            //FALL local song, er returned einfach die local song signature am ende der URI
+            if (uri.startsWith('spotify:local')) return track_id;
+            //FALL normaler song, er fragt einfach nach dem song mit der track_id und returned den namen
+            else {
+                const track = await this.spotifyApiService.sendGetCall(`tracks/${track_id}`);
+                return track.name;
+            }
+        }
+    }
+
     async getTrackByIndex(playlist_id: string, index: number): Promise<any> {
         try {
             const playlist_size = await this.playlistService.getPlaylistSizeByID(playlist_id);

@@ -71,15 +71,14 @@ export class PlaylistService {
         }
     }
 
-    async getPlaylistByIDOnlyNecessaryInfo(playlist_id: string){
-        return await this.getPlaylistByID(playlist_id, "name,snapshot_id,tracks(total)")
+    async getPlaylistByIDOnlyNecessaryInfo(playlist_id: string) {
+        return await this.getPlaylistByID(playlist_id, 'name,snapshot_id,tracks.total');
     }
 
     async getPlaylistByID(playlist_id: string, fields: string = ''): Promise<any> {
-        return await this.spotifyApiService.sendGetCall(
-            `playlists/${playlist_id}`,
-            { ...(fields && { fields }) }
-        );
+        return await this.spotifyApiService.sendGetCall(`playlists/${playlist_id}`, {
+            ...(fields && { fields }),
+        });
     }
 
     async getPlaylistByName(name: string): Promise<any> {
@@ -108,13 +107,18 @@ export class PlaylistService {
         range_length: number = 1,
     ): Promise<string> {
         try {
-            return await this.spotifyApiService.sendPutCall(`playlists/${playlist_id}/tracks`, {
-                range_start,
-                range_length,
-                insert_before,
-                //wenn snapshot_id gesetzt, dann wird es eingefügt
-                ...(snapshot_id && { snapshot_id }),
-            });
+            const response = await this.spotifyApiService.sendPutCall(
+                `playlists/${playlist_id}/tracks`,
+                {
+                    range_start,
+                    range_length,
+                    insert_before,
+                    //wenn snapshot_id gesetzt, dann wird es eingefügt
+                    ...(snapshot_id && { snapshot_id }),
+                },
+            );
+            //returned nicht das Objekt mit einem string attribut, sondern den string selber
+            return response.snapshot_id;
         } catch (error) {
             console.error(error);
             throw error;

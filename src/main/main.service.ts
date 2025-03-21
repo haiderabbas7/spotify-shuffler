@@ -7,8 +7,8 @@ import { ShuffleService } from '../shuffle/shuffle.service';
 import { PlaylistService } from '../playlist/playlist.service';
 import { TrackService } from '../track/track.service';
 import { UserService } from '../user/user.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { LowDbService } from '../low-db/low-db.service';
+import { promises as fs } from 'fs';
 
 @Injectable()
 export class MainService {
@@ -27,21 +27,17 @@ export class MainService {
     //TODO: entferne die methode später irgendwann mal, ist nur jetzt zum testen
     //@Cron(CronExpression.EVERY_10_SECONDS)
     async testMain() {
+        const playlist_id_testplaylistcopy = '4B2UOzffIG92Kh2PTPqgWi';
+        //await this.resetApplication();
+
         console.time('shuffle');
-        //const test = await this.trackService.getTracksOfPlaylistByID('41yP6x49QBGMdkNN7ATj5Y')
-        //const test = await this.trackService.getTracksOfPlaylistByIDOnlyNecessaryInfo('41yP6x49QBGMdkNN7ATj5Y')
-        //console.log(test)
-        //this.lowDBService.init()
-        //console.log(await this.lowDBService.addTrack('aa', 'uri, more like u pee'))
-        await this.lowDBService.resetDB();
-        await this.shuffleService.dynamicWeightedShuffle('4B2UOzffIG92Kh2PTPqgWi', 2);
-        //await this.lowDBService.removeTrack('aa', 'A')
-        //await this.startShuffleApplication();
-        //await this.shuffleService.insertionShuffle('0BfYlDPlZlFpDlJxxGNGWi')
+        await this.shuffleService.dynamicWeightedShuffle('41yP6x49QBGMdkNN7ATj5Y');
         console.timeEnd('shuffle');
     }
 
-    @Cron(CronExpression.EVERY_2_HOURS)
+    /*WICHTIG: wenn der dynamic shuffle gut ist dann benutz den hier unten
+     *  aber evtl wenn es fehler gibt oder so, abfangen und dann insertion shuffle machen? idk*/
+    //@Cron(CronExpression.EVERY_2_HOURS)
     async startShuffleApplication() {
         const playlists_to_shuffle: string[] =
             await this.shuffleService.determinePlaylistsToShuffle();
@@ -55,6 +51,21 @@ export class MainService {
             }
         }
     }
+
+    async resetApplication() {
+        //Zum resetten der test playlist
+        //await this.shuffleService.resetTestPlaylistCopy();
+
+        //resetted die persistenten daten
+        await this.lowDBService.resetDB();
+
+        //Logs löschen
+        await fs.writeFile('logs/pm2.log', '');
+
+        this.helperService.printWithTimestamp('Application was reset');
+    }
+
+    //TODO: entfernen, war nur zum test
     async testBackground() {
         await (
             await this.helperService.getOpen()

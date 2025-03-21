@@ -62,7 +62,7 @@ export class SpotifyApiService {
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
                         console.log(
-                            `${status}: Rate Limit exceeded, waiting ${wait_time / 1000}s...`,
+                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
                         );
                     } else {
                         console.log(`${status}: Timeout, waiting ${wait_time / 1000}s...`);
@@ -146,7 +146,7 @@ export class SpotifyApiService {
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
                         console.log(
-                            `${status}: Rate Limit exceeded, waiting ${wait_time / 1000}s...`,
+                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
                         );
                     } else {
                         console.log(`${status}: Timeout, waiting ${wait_time / 1000}s...`);

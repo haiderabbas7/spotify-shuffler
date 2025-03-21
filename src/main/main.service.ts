@@ -52,6 +52,10 @@ export class MainService {
         }
     }
 
+    /*WICHTIG: schreib eine methode initialShuffle, welche wie die startShuffleApplication funktioniert
+    *  aber halt 24 stunden zurück guckt und dann nur einmal shuffled.
+    *  und die rufe ich dann einmal auf beim starten der application, damit morgens einmal alle wichtigen playlists geshuffled werden*/
+
     async resetApplication() {
         //Zum resetten der test playlist
         //await this.shuffleService.resetTestPlaylistCopy();
@@ -71,8 +75,4 @@ export class MainService {
             await this.helperService.getOpen()
         )('https://www.example.com/');
     }
-
-    /*TODO: eine funktion resetApplication, die halt die anwendung resetted
-       soll die persistenten daten in der lowDB löschen und das pm2.log leeren
-       calle ich wenn ich app in betrieb nehme und vllt ab und zu zum debugging*/
 }

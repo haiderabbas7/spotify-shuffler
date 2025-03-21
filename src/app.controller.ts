@@ -1,28 +1,18 @@
-import { Controller, Get, Inject, Redirect, Req } from '@nestjs/common';
+import { Controller, Get, Redirect, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { HttpService } from '@nestjs/axios';
 import { AuthService } from './auth/auth.service';
-import { ShuffleService } from './shuffle/shuffle.service';
-import { PlaylistService } from './playlist/playlist.service';
-import { TrackService } from './track/track.service';
 import { ConfigService } from '@nestjs/config';
-import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import * as querystring from 'node:querystring';
 import { MainService } from './main/main.service';
 
 @Controller()
 export class AppController {
-    private scope: any;
-    private client_id: any;
-    private redirect_uri: any;
+    private readonly scope: any;
+    private readonly client_id: any;
+    private readonly redirect_uri: any;
     constructor(
-        private readonly httpService: HttpService,
         private readonly authService: AuthService,
-        private readonly shuffleService: ShuffleService,
-        private readonly playlistService: PlaylistService,
-        private readonly trackService: TrackService,
         private readonly configService: ConfigService,
-        @Inject(CACHE_MANAGER) private cacheManager: Cache,
         private readonly mainService: MainService,
     ) {
         this.scope =
@@ -53,35 +43,37 @@ export class AppController {
             code: req.query.code,
         });
 
-        //TODO: mach das hier später weg, war nur zum testen. aber ist ne gute idee um eine methode direkt aufzurufen
+        //TODO: mach das hier später weg, war nur zum testen
         this.mainService.testMain();
 
-        /*TODO: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
+        /*WICHTIG: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/
 
+        //WICHTIG: füg hier den call auf mainservice initialShuffles ein
+
         return `
-        <html lang="en">
-        <head>
-            <title>My Spotify Shuffler</title>
-            <style>
-                body {
-                    background-color: #333;
-                    color: white;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100vh;
-                    margin: 0;
-                    font-size: 2em;
-                    font-family: Papyrus,serif;
-                }
-            </style>
-        </head>
-        <body>
-            <p>Close the tab vro...👅👅👅👅👅</p>
-        </body>
-        </html>
-    `;
+            <html lang="en">
+            <head>
+                <title>My Spotify Shuffler</title>
+                <style>
+                    body {
+                        background-color: #333;
+                        color: white;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                        margin: 0;
+                        font-size: 2em;
+                        font-family: Papyrus,serif;
+                    }
+                </style>
+            </head>
+            <body>
+                <p>Close the tab vro...👅👅👅👅👅</p>
+            </body>
+            </html>
+        `;
     }
 
     @Get('/shuffle')
@@ -89,5 +81,5 @@ export class AppController {
         this.mainService.startShuffleApplication();
     }
 
-    //OPTIONAL: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert
+    /*OPTIONAL: mach hier eine route config, womit ich vllt paar sachen konfigurieren kann. wird halt iwie persistiert*/
 }

@@ -17,8 +17,6 @@ export class SpotifyApiService {
         private readonly helperService: HelperService,
     ) {}
 
-    //TODO: mach hier methoden für die weiteren HTTP methoden wie POST oder DELETE wenn notwendig
-
     /*WICHTIG: schreib eine zentrale error handling methode handleError, welche ich in den catch blöcken unten immer aufrufe
        dadurch weniger kopieren, redundanz und ich kann da zentral das verhalten definieren
        UND WICHTIG MACH DAS OHNE GPT, dadurch zwinge ich mich fehler im code selber zu erkennen*/

@@ -53,12 +53,9 @@ export class HelperService {
         await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
     }
 
-    /*OPTIONAL: schreib hier vllt nach bedarf eine Methode, die Date objekte in meine Timezone umrechnet
-        guck dafür in txt meine notizen um zu wissen wie ich umrechnen muss und so*/
-
-    /*TODO: schreib eine methode welche den momentanen zeitpunkt mit einer nachricht printed
-     *  also ich gib der methode ne message und er printed: (DD.MM.YY HH:MM) message
-     *  dazu gucken wie ich das momentane datum mit new Date in das format bringen kann*/
+    /**
+     * hab ich von GPT, printed einfach (DD.MM.YY HH:MM) message
+     */
     printWithTimestamp(message: string) {
         const now = new Date();
         const formattedDate = now
@@ -70,7 +67,7 @@ export class HelperService {
                 minute: '2-digit',
                 hour12: false,
             })
-            .replace(',', ''); // Entfernt das Komma zwischen Datum und Uhrzeit
+            .replace(',', '');
 
         console.log(`(${formattedDate}) ${message}`);
     }

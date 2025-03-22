@@ -49,14 +49,11 @@ export class PlaylistService {
         return [...playlist_ids];
     }
 
-    /*TODO: wandel diese methode ganz einfach um dass sie den /me endpunkt nutzt damit einheitlich
-       weil an anderen stellen benutze ich auch den me endpunkt, weil es keinen user endpunkt gibt*/
-
-    async getOwnPlaylists(){
+    async getOwnPlaylists(): Promise<any>{
         try {
             const user_id: any = this.userService.getUserID();
             let playlists: any[] = [];
-            let nextURL: string = `users/${user_id}/playlists?offset=0&limit=20`;
+            let nextURL: string = `me/playlists?offset=0&limit=20`;
             do {
                 const data: any = await this.spotifyApiService.sendGetCall(
                     nextURL.replace('https://api.spotify.com/v1/', ''),

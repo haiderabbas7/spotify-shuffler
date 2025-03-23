@@ -17,7 +17,7 @@ export class SpotifyApiService {
         private readonly helperService: HelperService,
     ) {}
 
-    /*WICHTIG: schreib eine zentrale error handling methode handleError, welche ich in den catch blöcken unten immer aufrufe
+    /*TODO: schreib eine zentrale error handling methode handleError, welche ich in den catch blöcken unten immer aufrufe
        dadurch weniger kopieren, redundanz und ich kann da zentral das verhalten definieren
        UND WICHTIG MACH DAS OHNE GPT, dadurch zwinge ich mich fehler im code selber zu erkennen*/
 
@@ -128,7 +128,6 @@ export class SpotifyApiService {
                 // Fällt in den Bereich 400-599 und ist kein 2xx Status
                 throw new Error(`API call failed with status ${response.status}`);
             } catch (error) {
-                //TODO: error handling hab ich von GPT, idk ob das funktioniert sieht aber gut aus. idfk teste vllt
                 const axiosError = error as AxiosError;
                 const status = axiosError.response?.status;
 

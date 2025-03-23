@@ -43,13 +43,13 @@ export class AppController {
             code: req.query.code,
         });
 
-        //TODO: mach das hier später weg, war nur zum testen
-        this.mainService.testMain();
+        //WICHTIG: bei deployment den test kack hier wegmachen und startShuffleapplication auskommentieren
+        this.mainService.testMain()
+        //wichtig: hier darf kein await dranstehen, damit das HTML direkt angeschickt werden kann
+        //this.mainService.startShuffleApplication(true);
 
         /*WICHTIG: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/
-
-        //WICHTIG: füg hier den call auf mainservice initialShuffles ein
 
         return `
             <html lang="en">

@@ -103,6 +103,6 @@ export class TrackService {
         }
     }
 
-    /* TODO: schreib hier eine methode isLocalSong, welches für ein Track objekt returned, ob es ein local file ist
+    /* OPTIONAL: schreib hier eine methode isLocalSong, welches für ein Track objekt returned, ob es ein local file ist
         ganz einfach damit ich es an anderen stellen nutzen kann*/
 }

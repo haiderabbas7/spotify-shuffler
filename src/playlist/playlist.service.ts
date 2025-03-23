@@ -24,11 +24,9 @@ export class PlaylistService {
         return playlist.owner.id == user_id;
     }
 
-    async getOwnListenedPlaylists(end_date?: Date): Promise<string[]> {
-        const x_hours_back: number = 5;
+    async getOwnListenedPlaylists(x_hours_back: number = 3): Promise<string[]> {
         const current_date: Date = new Date();
-        const optional_end_date =
-            end_date ?? new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
+        const optional_end_date = new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
         const listened_tracks: any =
             await this.trackService.getRecentlyPlayedTracks(optional_end_date);
         const playlist_ids: Set<string> = new Set<string>();
@@ -49,7 +47,7 @@ export class PlaylistService {
         return [...playlist_ids];
     }
 
-    async getOwnPlaylists(): Promise<any>{
+    async getOwnPlaylists(): Promise<any> {
         try {
             const user_id: any = this.userService.getUserID();
             let playlists: any[] = [];

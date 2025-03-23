@@ -56,7 +56,7 @@ export class HelperService {
     /**
      * hab ich von GPT, printed einfach (DD.MM.YY HH:MM) message
      */
-    printWithTimestamp(message: string) {
+    printWithTimestamp(message: string, is_error: boolean = false) {
         const now = new Date();
         const formattedDate = now
             .toLocaleString('de-DE', {
@@ -69,6 +69,29 @@ export class HelperService {
             })
             .replace(',', '');
 
-        console.log(`(${formattedDate}) ${message}`);
+        if(is_error){
+            console.error(`(${formattedDate}) ${message}`);
+        }
+        else{
+            console.log(`(${formattedDate}) ${message}`);
+        }
     }
+
+    /** Hab ich von GPT, man übergibt eine Dauer in Millisekunden an, zb durch eine Date differenz
+     * und er returned einen schönen string abhängig von der Länge
+     * Dauer kürzer als eine Minute => SS.MSMS seconds, zb 15.37 seconds
+     * Dauer länger als eine Minute => MM:SS minutes, zb 1:23 minutes
+     */
+    getFormattedStringForDuration(durationMs: number): string {
+        const minutes = Math.floor(durationMs / 60000);
+        const seconds = (durationMs % 60000) / 1000;
+
+        if (minutes > 0) {
+            return `${minutes}:${String(Math.floor(seconds)).padStart(2, '0')} minutes`;
+        } else {
+            return `${seconds.toFixed(2)} seconds`;
+        }
+    }
+
+
 }

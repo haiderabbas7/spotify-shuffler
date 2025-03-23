@@ -9,6 +9,7 @@ import { TrackService } from '../track/track.service';
 import { UserService } from '../user/user.service';
 import { LowDbService } from '../low-db/low-db.service';
 import { promises as fs } from 'fs';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class MainService {
@@ -24,42 +25,48 @@ export class MainService {
         private readonly lowDBService: LowDbService,
     ) {}
 
-    //TODO: entferne die methode später irgendwann mal, ist nur jetzt zum testen
-    //@Cron(CronExpression.EVERY_10_SECONDS)
     async testMain() {
         const playlist_id_testplaylistcopy = '4B2UOzffIG92Kh2PTPqgWi';
         //await this.resetApplication();
+        //Zum resetten der test playlist
+        //await this.shuffleService.resetTestPlaylistCopy();
 
         console.time('shuffle');
-        await this.shuffleService.dynamicWeightedShuffle('41yP6x49QBGMdkNN7ATj5Y');
+        await this.shuffleService.dynamicWeightedShuffle(playlist_id_testplaylistcopy);
         console.timeEnd('shuffle');
     }
 
-    /*WICHTIG: wenn der dynamic shuffle gut ist dann benutz den hier unten
-     *  aber evtl wenn es fehler gibt oder so, abfangen und dann insertion shuffle machen? idk*/
-    //@Cron(CronExpression.EVERY_2_HOURS)
-    async startShuffleApplication() {
-        const playlists_to_shuffle: string[] =
-            await this.shuffleService.determinePlaylistsToShuffle();
+    @Cron(CronExpression.EVERY_HOUR)
+    async startShuffleApplication(is_initial: boolean = false) {
+        const look_x_hours_back = is_initial ? 24 : 3;
+        const playlists_to_shuffle: string[] = await this.shuffleService.determinePlaylistsToShuffle(look_x_hours_back);
         if (playlists_to_shuffle === undefined || playlists_to_shuffle.length == 0) {
-            console.log('Nothing to shuffle');
+            this.helperService.printWithTimestamp('Nothing to shuffle...');
         } else {
             if (playlists_to_shuffle) {
                 for (const playlist_id of playlists_to_shuffle) {
-                    await this.shuffleService.insertionShuffle(playlist_id);
+                    const playlist = await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
+                    const playlist_name = playlist.name
+                    this.helperService.printWithTimestamp(`Shuffling playlist "${playlist_name}"`);
+                    const start_time = Date.now();
+                    try{
+                        await this.shuffleService.dynamicWeightedShuffle(playlist_id)
+                    }
+                    //wenn irgendwie beim dynamic shuffle ein fehler aufkommt, dann gibt es noch den normalen shuffle als fail-save
+                    catch (error) {
+                        console.error(error)
+                        this.helperService.printWithTimestamp(`Error occurred when trying dynamic shuffle, will instead use insertion shuffle`);
+                        await this.shuffleService.insertionShuffle(playlist_id);
+                    }
+                    const end_time = Date.now();
+                    this.helperService.printWithTimestamp(`Shuffle completed in ${this.helperService.getFormattedStringForDuration(end_time - start_time)}`)
                 }
+                this.helperService.printWithTimestamp('Shuffle done!');
             }
         }
     }
 
-    /*WICHTIG: schreib eine methode initialShuffle, welche wie die startShuffleApplication funktioniert
-    *  aber halt 24 stunden zurück guckt und dann nur einmal shuffled.
-    *  und die rufe ich dann einmal auf beim starten der application, damit morgens einmal alle wichtigen playlists geshuffled werden*/
-
     async resetApplication() {
-        //Zum resetten der test playlist
-        //await this.shuffleService.resetTestPlaylistCopy();
-
         //resetted die persistenten daten
         await this.lowDBService.resetDB();
 
@@ -69,10 +76,4 @@ export class MainService {
         this.helperService.printWithTimestamp('Application was reset');
     }
 
-    //TODO: entfernen, war nur zum test
-    async testBackground() {
-        await (
-            await this.helperService.getOpen()
-        )('https://www.example.com/');
-    }
 }

@@ -17,7 +17,7 @@ export class SpotifyApiService {
         private readonly helperService: HelperService,
     ) {}
 
-    /*TODO: schreib eine zentrale error handling methode handleError, welche ich in den catch blöcken unten immer aufrufe
+    /*WICHTIG: schreib eine zentrale error handling methode handleError, welche ich in den catch blöcken unten immer aufrufe
        dadurch weniger kopieren, redundanz und ich kann da zentral das verhalten definieren
        UND WICHTIG MACH DAS OHNE GPT, dadurch zwinge ich mich fehler im code selber zu erkennen*/
 
@@ -50,7 +50,7 @@ export class SpotifyApiService {
 
                 if (status === 401) {
                     // Token erneuern
-                    console.log(`${status}: Token expired, fetching new token...`);
+                    this.helperService.printWithTimestamp(`${status}: Token expired, fetching new token...`, true)
                     access_token = await this.authService.getAccessToken();
                     /*} else if (status === 404) {
                         // Behandle 404 hier, ohne zu werfen
@@ -59,15 +59,13 @@ export class SpotifyApiService {
                     // Exponential Backoff
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
-                        console.log(
-                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
-                        );
+                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`, true)
                     } else {
-                        console.log(`${status}: Timeout, waiting ${wait_time / 1000}s...`);
+                        this.helperService.printWithTimestamp(`${status}: Timeout, waiting ${wait_time / 1000}s...`, true)
                     }
                     await new Promise((resolve) => setTimeout(resolve, wait_time));
                 } else {
-                    console.error(`Unknown error (${status}):`, axiosError.response?.data);
+                    this.helperService.printWithTimestamp(`Unknown error (${status}): ${axiosError.response?.data}`, true)
                     throw error;
                 }
             }
@@ -133,7 +131,7 @@ export class SpotifyApiService {
 
                 if (status === 401) {
                     // Token erneuern
-                    console.log(`${status}: Token expired, fetching new token...`);
+                    this.helperService.printWithTimestamp(`${status}: Token expired, fetching new token...`, true)
                     access_token = await this.authService.getAccessToken();
                     /*} else if (status === 404) {
                     // Behandle 404 hier, ohne zu werfen
@@ -142,15 +140,13 @@ export class SpotifyApiService {
                     // Exponential Backoff
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
-                        console.log(
-                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
-                        );
+                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`)
                     } else {
-                        console.log(`${status}: Timeout, waiting ${wait_time / 1000}s...`);
+                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`)
                     }
                     await new Promise((resolve) => setTimeout(resolve, wait_time));
                 } else {
-                    console.error(`Unknown error (${status}):`, axiosError.response?.data);
+                    this.helperService.printWithTimestamp(`Unknown error (${status}): ${axiosError.response?.data}`, true)
                     throw error;
                 }
             }

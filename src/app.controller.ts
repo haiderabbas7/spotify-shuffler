@@ -43,10 +43,11 @@ export class AppController {
             code: req.query.code,
         });
 
-        //WICHTIG: bei deployment den test kack hier wegmachen und startShuffleapplication auskommentieren
-        this.mainService.testMain()
+        //zum testen
+        //this.mainService.testMain()
+
         //wichtig: hier darf kein await dranstehen, damit das HTML direkt angeschickt werden kann
-        //this.mainService.startShuffleApplication(true);
+        this.mainService.startShuffleApplication(true);
 
         /*WICHTIG: google nochmal ordentlich, ob sich eine möglichkeit finden lässt, mit dem ich den tab hier schließen kann
          *  weil ich gib mich nicht geschlagen damit, dass man den Tab selber schließen muss*/

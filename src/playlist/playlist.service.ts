@@ -24,7 +24,7 @@ export class PlaylistService {
         return playlist.owner.id == user_id;
     }
 
-    async getOwnListenedPlaylists(x_hours_back: number = 3): Promise<string[]> {
+    async getOwnListenedPlaylists(x_hours_back: number = 2): Promise<string[]> {
         const current_date: Date = new Date();
         const optional_end_date = new Date(current_date.getTime() - x_hours_back * 60 * 60 * 1000);
         const listened_tracks: any =
@@ -140,11 +140,49 @@ export class PlaylistService {
 
     async getPlaylistNameByID(playlist_id: string): Promise<string> {
         try {
-            const playlist: any = await this.getPlaylistByID(playlist_id);
+            const playlist: any = await this.getPlaylistByID(playlist_id, 'name');
             return playlist.name;
         } catch (error) {
             console.error(error);
             throw error;
         }
     }
+
+    async getPlaylistDescription(playlist_id: string): Promise<string> {
+        try {
+            const playlist: any = await this.getPlaylistByID(playlist_id, 'description');
+            return playlist.description;
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async setPlaylistDescription(playlist_id: string, new_description: string){
+        try {
+            await this.spotifyApiService.sendPutCall(
+                `playlists/${playlist_id}`,
+                { description: new_description}
+            )
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
+    }
+
+    async addCurrentTimestampToPlaylistDescription(playlist_id: string) {
+        const current_time = this.helperService.getCurrentTimestampFormatted();
+        let current_description = await this.getPlaylistDescription(playlist_id);
+
+        // Entferne den alten Timestamp, falls vorhanden
+        const timestampPrefix = " (Playlist last shuffled on ";
+        const timestampStartIndex = current_description.indexOf(timestampPrefix);
+        if (timestampStartIndex !== -1) {
+            current_description = current_description.substring(0, timestampStartIndex);
+        }
+
+        const new_description = current_description + `${timestampPrefix}${current_time})`;
+        await this.setPlaylistDescription(playlist_id, new_description);
+    }
+
 }

@@ -53,22 +53,25 @@ export class HelperService {
         await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
     }
 
-    /**
-     * hab ich von GPT, printed einfach (DD.MM.YY HH:MM) message
-     */
-    printWithTimestamp(message: string, is_error: boolean = false) {
+
+    getCurrentTimestampFormatted(): string{
         const now = new Date();
-        const formattedDate = now
+        return now
             .toLocaleString('de-DE', {
                 day: '2-digit',
                 month: '2-digit',
-                year: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: false,
             })
             .replace(',', '');
+    }
 
+    /**
+     * hab ich von GPT, printed einfach (DD.MM.YY HH:MM) message
+     */
+    printWithTimestamp(message: string, is_error: boolean = false) {
+        const formattedDate = this.getCurrentTimestampFormatted()
         if(is_error){
             console.error(`(${formattedDate}) ${message}`);
         }

@@ -44,7 +44,7 @@ export class AppController {
         });
 
         //zum testen
-        //this.mainService.testMain()
+        //this.mainService.testMain();
 
         //wichtig: hier darf kein await dranstehen, damit das HTML direkt angeschickt werden kann
         this.mainService.startShuffleApplication(true);

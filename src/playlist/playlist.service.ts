@@ -158,12 +158,11 @@ export class PlaylistService {
         }
     }
 
-    async setPlaylistDescription(playlist_id: string, new_description: string){
+    async setPlaylistDescription(playlist_id: string, new_description: string) {
         try {
-            await this.spotifyApiService.sendPutCall(
-                `playlists/${playlist_id}`,
-                { description: new_description}
-            )
+            await this.spotifyApiService.sendPutCall(`playlists/${playlist_id}`, {
+                description: new_description,
+            });
         } catch (error) {
             console.error(error);
             throw error;
@@ -175,7 +174,7 @@ export class PlaylistService {
         let current_description = await this.getPlaylistDescription(playlist_id);
 
         // Entferne den alten Timestamp, falls vorhanden
-        const timestampPrefix = " (Playlist last shuffled on ";
+        const timestampPrefix = ' (Playlist last shuffled on ';
         const timestampStartIndex = current_description.indexOf(timestampPrefix);
         if (timestampStartIndex !== -1) {
             current_description = current_description.substring(0, timestampStartIndex);
@@ -184,5 +183,4 @@ export class PlaylistService {
         const new_description = current_description + `${timestampPrefix}${current_time})`;
         await this.setPlaylistDescription(playlist_id, new_description);
     }
-
 }

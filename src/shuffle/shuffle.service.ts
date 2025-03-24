@@ -23,7 +23,8 @@ export class ShuffleService {
         const shuffle_these_playlists: Set<string> = new Set<string>();
 
         //fragt die eigenen gehörten playlists ab
-        const listened_playlists: string[] = await this.playlistService.getOwnListenedPlaylists(x_hours_back);
+        const listened_playlists: string[] =
+            await this.playlistService.getOwnListenedPlaylists(x_hours_back);
         for (const listened_playlist of listened_playlists) {
             shuffle_these_playlists.add(listened_playlist);
         }
@@ -52,7 +53,7 @@ export class ShuffleService {
     }
 
     async dynamicWeightedShuffle(playlist_id: string, shuffle_amount: number = 0) {
-        try{
+        try {
             /*OPTIONAL: ich frag hier einmal nur nach total, name und snapshot id und einmal nur nach den tracks
              *  beide calls brauchen fast 6 sekunden, obwohl das fragen nach den tracks einfach 26 mehr calls sind
              *  ich kann aber beim abfragen der playlists auch die tracks mit abfragen
@@ -60,7 +61,8 @@ export class ShuffleService {
             const max_weight = 1000;
             const min_weight = 50;
             const base_weight = 500;
-            const playlist = await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
+            const playlist =
+                await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
             //const playlist_name = playlist.name
             //this.helperService.printWithTimestamp(`Shuffling playlist "${playlist_name}"`);
             const playlist_size = playlist.tracks.total;
@@ -75,7 +77,8 @@ export class ShuffleService {
             if (await this.lowDBService.doesPlaylistExist(playlist_id)) {
                 let weighted_tracks = await this.lowDBService.getTracks(playlist_id);
 
-                const snapshot_id_after_last_shuffle = await this.lowDBService.getSnapshotID(playlist_id);
+                const snapshot_id_after_last_shuffle =
+                    await this.lowDBService.getSnapshotID(playlist_id);
 
                 //wenn seit letztem shuffle änderungen an der playlist gemacht wurden, so ist new_snapshot_id different
                 if (new_snapshot_id !== snapshot_id_after_last_shuffle) {
@@ -108,12 +111,13 @@ export class ShuffleService {
                     }
 
                     /*OPTIONAL: hier mache ich die playlist änderungen und frag dann von der lowdb alle tracks ab
-                    *  aber ich kann die änderungen doch auch gleichzeitig direkt an weighted_tracks lokal im code machen
-                    *  dadurch spare ich mir den await call hier unten*/
+                     *  aber ich kann die änderungen doch auch gleichzeitig direkt an weighted_tracks lokal im code machen
+                     *  dadurch spare ich mir den await call hier unten*/
                     weighted_tracks = await this.lowDBService.getTracks(playlist_id);
                 }
                 //holt sich die letzten geshuffleden tracks aus der lowdb und resetted sie dann
-                const last_shuffled_tracks = await this.lowDBService.getLastShuffledTracks(playlist_id);
+                const last_shuffled_tracks =
+                    await this.lowDBService.getLastShuffledTracks(playlist_id);
                 await this.lowDBService.clearLastShuffledTracks(playlist_id);
 
                 for (const track of weighted_tracks) {
@@ -124,12 +128,11 @@ export class ShuffleService {
 
                     //abhängig davon ob der song letztes mal ausgewählt wurde passt er das weighting an
                     /*WICHTIG: google oder überleg dir eine bessere idee hier die weights anzupassen
-                    *  halbieren bei auswahl und +10% ist glaube nicht so schlecht, aber es gibt safe fairere möglichkeiten*/
+                     *  halbieren bei auswahl und +10% ist glaube nicht so schlecht, aber es gibt safe fairere möglichkeiten*/
                     if (isInShuffledTracks) {
                         const new_weight = Math.round(Math.max(track.weight * 0.5, min_weight));
                         await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
-                    }
-                    else {
+                    } else {
                         const new_weight = Math.round(Math.min(track.weight * 1.1, max_weight));
                         await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
                     }
@@ -144,8 +147,8 @@ export class ShuffleService {
                     await this.lowDBService.addTrack(playlist_id, track.track.uri, base_weight);
                 }
                 /*OPTIONAL: ich muss ja nicht die tracks neu von der lowdb anfragen
-                *  stattdessen kann ich sie auch einfach mit base weight lokal speichern und damit arbeiten
-                *  dadurch spare ich mir das await hier, was an sich viel ist glaube ich*/
+                 *  stattdessen kann ich sie auch einfach mit base weight lokal speichern und damit arbeiten
+                 *  dadurch spare ich mir das await hier, was an sich viel ist glaube ich*/
                 final_weighted_tracks = await this.lowDBService.getTracks(playlist_id);
             }
             for (let i = 0; i < shuffle_amount; i++) {
@@ -159,10 +162,10 @@ export class ShuffleService {
 
                 //findet den track in all_tracks und macht damit das reordering
                 /*FIX: hier gabs mal nen fehler, dass der findIndex -1 returned hat
-                *  weil er den index nicht finden konnte, was dann halt einen spotify API error ausgelöst hat
-                *  beim reordering, weil range start = -1 natürlich falsch ist
-                *  der fehler kam bei tests von mir, aber ich konnte es danach nicht mehr wieder reproduzieren
-                *  nur damit du bescheid weißt*/
+                 *  weil er den index nicht finden konnte, was dann halt einen spotify API error ausgelöst hat
+                 *  beim reordering, weil range start = -1 natürlich falsch ist
+                 *  der fehler kam bei tests von mir, aber ich konnte es danach nicht mehr wieder reproduzieren
+                 *  nur damit du bescheid weißt*/
                 const track_index = all_tracks.findIndex(
                     (track) => track.track.uri === chosen_track.uri,
                 );
@@ -178,9 +181,9 @@ export class ShuffleService {
 
                 //fügt den geshuffleden song zur lowdb hinzu für nächstes mal
                 /*OPTIONAL: hier könnte man ja die geshufflden tracks in einer variablen halten
-                *  und dann mit einer neuen methode direkt in einem stück in die lowdb schreiben
-                *  also nicht für N tracks N awaits sondern nur ein await
-                *  aber joa weiß nicht ob das so großartig viel performance increase gibt tbh*/
+                 *  und dann mit einer neuen methode direkt in einem stück in die lowdb schreiben
+                 *  also nicht für N tracks N awaits sondern nur ein await
+                 *  aber joa weiß nicht ob das so großartig viel performance increase gibt tbh*/
                 await this.lowDBService.addShuffledTrack(
                     playlist_id,
                     chosen_track.uri,
@@ -188,8 +191,7 @@ export class ShuffleService {
                 );
             }
             await this.lowDBService.setSnapshotID(playlist_id, new_snapshot_id);
-        }
-        catch (error) {
+        } catch (error) {
             this.helperService.printWithTimestamp(`Error occurred when shuffling`, true);
             throw error;
         }
@@ -245,5 +247,4 @@ export class ShuffleService {
             ],
         });
     }
-
 }

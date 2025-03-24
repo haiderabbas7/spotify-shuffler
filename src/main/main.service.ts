@@ -27,42 +27,59 @@ export class MainService {
 
     async testMain() {
         const playlist_id_testplaylistcopy = '4B2UOzffIG92Kh2PTPqgWi';
-        await this.resetApplication();
+        //await this.resetApplication();
 
         //Zum resetten der test playlist
         //await this.shuffleService.resetTestPlaylistCopy();
 
         console.time('shuffle');
-        await this.playlistService.addCurrentTimestampToPlaylistDescription('0BfYlDPlZlFpDlJxxGNGWi')
+        //await this.playlistService.addCurrentTimestampToPlaylistDescription('0BfYlDPlZlFpDlJxxGNGWi')
         //await this.shuffleService.dynamicWeightedShuffle(playlist_id_testplaylistcopy);
+        /*await this.cacheManager.set('test', 'test');
+        const first = await this.cacheManager.get('test');
+        console.log("first: " + first)
+        await this.helperService.wait(5)
+        const second = await this.cacheManager.get('test');
+        console.log("second: " + second)*/
+        while (true) {
+            await this.shuffleService.dynamicWeightedShuffle(playlist_id_testplaylistcopy);
+            await this.helperService.wait(5);
+        }
         console.timeEnd('shuffle');
     }
 
     @Cron(CronExpression.EVERY_HOUR)
     async startShuffleApplication(is_initial: boolean = false) {
         const look_x_hours_back = is_initial ? 24 : 2;
-        const playlists_to_shuffle: string[] = await this.shuffleService.determinePlaylistsToShuffle(look_x_hours_back);
+        const playlists_to_shuffle: string[] =
+            await this.shuffleService.determinePlaylistsToShuffle(look_x_hours_back);
         if (playlists_to_shuffle === undefined || playlists_to_shuffle.length == 0) {
             this.helperService.printWithTimestamp('Nothing to shuffle...');
         } else {
             if (playlists_to_shuffle) {
                 for (const playlist_id of playlists_to_shuffle) {
-                    const playlist = await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
-                    const playlist_name = playlist.name
+                    const playlist =
+                        await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
+                    const playlist_name = playlist.name;
                     this.helperService.printWithTimestamp(`Shuffling playlist "${playlist_name}"`);
                     const start_time = Date.now();
-                    try{
-                        await this.shuffleService.dynamicWeightedShuffle(playlist_id)
-                    }
-                    //wenn irgendwie beim dynamic shuffle ein fehler aufkommt, dann gibt es noch den normalen shuffle als fail-save
-                    catch (error) {
-                        console.error(error)
-                        this.helperService.printWithTimestamp(`Error occurred when trying dynamic shuffle, will instead use insertion shuffle`);
+                    try {
+                        await this.shuffleService.dynamicWeightedShuffle(playlist_id);
+                    } catch (error) {
+                        //wenn irgendwie beim dynamic shuffle ein fehler aufkommt, dann gibt es noch den normalen shuffle als fail-save
+                        console.error(error);
+                        this.helperService.printWithTimestamp(
+                            `Error occurred when trying dynamic shuffle, will instead use insertion shuffle`,
+                        );
                         await this.shuffleService.insertionShuffle(playlist_id);
                     }
                     const end_time = Date.now();
-                    await this.playlistService.addCurrentTimestampToPlaylistDescription(playlist_id)
-                    this.helperService.printWithTimestamp(`Shuffle completed in ${this.helperService.getFormattedStringForDuration(end_time - start_time)}`)
+                    await this.playlistService.addCurrentTimestampToPlaylistDescription(
+                        playlist_id,
+                    );
+                    this.helperService.printWithTimestamp(
+                        `Shuffle completed in ${this.helperService.getFormattedStringForDuration(end_time - start_time)}`,
+                    );
                 }
                 this.helperService.printWithTimestamp('Shuffle done!');
             }
@@ -78,5 +95,4 @@ export class MainService {
 
         this.helperService.printWithTimestamp('Application was reset');
     }
-
 }

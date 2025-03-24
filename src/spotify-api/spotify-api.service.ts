@@ -50,7 +50,10 @@ export class SpotifyApiService {
 
                 if (status === 401) {
                     // Token erneuern
-                    this.helperService.printWithTimestamp(`${status}: Token expired, fetching new token...`, true)
+                    this.helperService.printWithTimestamp(
+                        `${status}: Token expired, fetching new token...`,
+                        true,
+                    );
                     access_token = await this.authService.getAccessToken();
                     /*} else if (status === 404) {
                         // Behandle 404 hier, ohne zu werfen
@@ -59,13 +62,22 @@ export class SpotifyApiService {
                     // Exponential Backoff
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
-                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`, true)
+                        this.helperService.printWithTimestamp(
+                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
+                            true,
+                        );
                     } else {
-                        this.helperService.printWithTimestamp(`${status}: Timeout, waiting ${wait_time / 1000}s...`, true)
+                        this.helperService.printWithTimestamp(
+                            `${status}: Timeout, waiting ${wait_time / 1000}s...`,
+                            true,
+                        );
                     }
                     await new Promise((resolve) => setTimeout(resolve, wait_time));
                 } else {
-                    this.helperService.printWithTimestamp(`Unknown error (${status}): ${axiosError.response?.data}`, true)
+                    this.helperService.printWithTimestamp(
+                        `Unknown error (${status}): ${axiosError.response?.data}`,
+                        true,
+                    );
                     throw error;
                 }
             }
@@ -131,7 +143,10 @@ export class SpotifyApiService {
 
                 if (status === 401) {
                     // Token erneuern
-                    this.helperService.printWithTimestamp(`${status}: Token expired, fetching new token...`, true)
+                    this.helperService.printWithTimestamp(
+                        `${status}: Token expired, fetching new token...`,
+                        true,
+                    );
                     access_token = await this.authService.getAccessToken();
                     /*} else if (status === 404) {
                     // Behandle 404 hier, ohne zu werfen
@@ -140,13 +155,20 @@ export class SpotifyApiService {
                     // Exponential Backoff
                     const wait_time = back_off_time * Math.pow(2, attempts - 1);
                     if (status === 429) {
-                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`)
+                        this.helperService.printWithTimestamp(
+                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
+                        );
                     } else {
-                        this.helperService.printWithTimestamp(`${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`)
+                        this.helperService.printWithTimestamp(
+                            `${status}: Rate Limit exceeded at ${endpoint}, waiting ${wait_time / 1000}s...`,
+                        );
                     }
                     await new Promise((resolve) => setTimeout(resolve, wait_time));
                 } else {
-                    this.helperService.printWithTimestamp(`Unknown error (${status}): ${axiosError.response?.data}`, true)
+                    this.helperService.printWithTimestamp(
+                        `Unknown error (${status}): ${axiosError.response?.data}`,
+                        true,
+                    );
                     throw error;
                 }
             }

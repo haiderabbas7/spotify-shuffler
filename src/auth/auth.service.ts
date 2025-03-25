@@ -29,7 +29,6 @@ export class AuthService {
     }
 
     async requestTokens(data: any) {
-        this.helperService.printWithTimestamp('Requesting initial tokens...');
         const response = await this.finalizePostCall(
             querystring.stringify({
                 grant_type: 'authorization_code',
@@ -44,7 +43,6 @@ export class AuthService {
     }
 
     async refreshToken(): Promise<any> {
-        this.helperService.printWithTimestamp('Refreshing access token...');
         const response = await this.finalizePostCall(
             querystring.stringify({
                 grant_type: 'refresh_token',

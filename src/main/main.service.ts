@@ -67,9 +67,8 @@ export class MainService {
                         await this.shuffleService.dynamicWeightedShuffle(playlist_id);
                     } catch (error) {
                         //wenn irgendwie beim dynamic shuffle ein fehler aufkommt, dann gibt es noch den normalen shuffle als fail-save
-                        console.error(error);
                         this.helperService.printWithTimestamp(
-                            `Error occurred when trying dynamic shuffle, will instead use insertion shuffle`,
+                            `Error occurred when trying dynamic shuffle, will instead use insertion shuffle + ${error}`,
                         );
                         await this.shuffleService.insertionShuffle(playlist_id);
                     }

@@ -86,33 +86,6 @@ export class SpotifyApiService {
         throw new Error(`Maximale Anzahl an Versuchen erreicht für ${endpoint}`);
     }
 
-    //meine eigene methode ohne error handling, funktioniert
-    /*async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
-        try {
-            const access_token = await this.authService.getAccessToken();
-            const response = await firstValueFrom(
-                this.httpService.get(`https://api.spotify.com/v1/${endpoint}`, {
-                    headers: {
-                        Authorization: `Bearer ${access_token}`,
-                    },
-                    params,
-                }),
-            );
-
-            console.log(endpoint + ":  " + response.status)
-            //returne
-            if (response.status >= 200 && response.status <= 299) {
-                return {
-                    data: response.data,
-                    status: response.status,
-                };
-            }
-
-        } catch (error) {
-            console.error(`Fehler beim API-Call an ${endpoint}:`, error);
-            throw error;
-        }
-    }*/
 
     async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
         const back_off_time = this.start_backoff_time; // Startwert für Backoff

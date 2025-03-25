@@ -64,25 +64,6 @@ export class PlaylistService {
             console.error(error);
         }
     }
-    //FUNKTIONIERT, BRAUCHT UM DIE 200 BIS 500 MS
-    /*async getOwnPlaylists(): Promise<any> {
-        try {
-            const user_id: any = this.userService.getUserID();
-            let playlists: any[] = [];
-            //let nextURL: string = `https://api.spotify.com/v1/users/${user_id}/playlists?offset=0&limit=20`;
-            let nextURL: string = `users/${user_id}/playlists?offset=0&limit=20`;
-            do {
-                const data: any = await this.spotifyApiService.sendGetCall(
-                    nextURL.replace('https://api.spotify.com/v1/', ''),
-                );
-                nextURL = data.next;
-                playlists = playlists.concat(data.items);
-            } while (nextURL !== null);
-            return playlists.filter((playlist) => this.isOwnPlaylist(playlist));
-        } catch (error) {
-            console.error(error);
-        }
-    }*/
 
     async getPlaylistByIDOnlyNecessaryInfo(playlist_id: string) {
         return await this.getPlaylistByID(playlist_id, 'name,snapshot_id,tracks.total');

@@ -9,7 +9,7 @@ import { SpotifyApiService } from '../spotify-api/spotify-api.service';
 
 @Injectable()
 export class ShuffleService {
-    private readonly default_shuffle_amount: number = 30;
+    private readonly default_shuffle_amount: number = 45;
     constructor(
         private readonly playlistService: PlaylistService,
         private readonly trackService: TrackService,

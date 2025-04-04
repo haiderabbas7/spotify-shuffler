@@ -27,10 +27,10 @@ export class MainService {
 
     async testMain() {
         const playlist_id_testplaylistcopy = '4B2UOzffIG92Kh2PTPqgWi';
-        //await this.resetApplication();
+        await this.resetApplication();
 
         //Zum resetten der test playlist
-        //await this.shuffleService.resetTestPlaylistCopy();
+        await this.shuffleService.resetTestPlaylistCopy();
 
         console.time('shuffle');
         //await this.playlistService.addCurrentTimestampToPlaylistDescription('0BfYlDPlZlFpDlJxxGNGWi')
@@ -41,10 +41,6 @@ export class MainService {
         await this.helperService.wait(5)
         const second = await this.cacheManager.get('test');
         console.log("second: " + second)*/
-        while (true) {
-            await this.shuffleService.dynamicWeightedShuffle(playlist_id_testplaylistcopy);
-            await this.helperService.wait(5);
-        }
         console.timeEnd('shuffle');
     }
 

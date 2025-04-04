@@ -86,7 +86,6 @@ export class SpotifyApiService {
         throw new Error(`Maximale Anzahl an Versuchen erreicht für ${endpoint}`);
     }
 
-
     async sendGetCall(endpoint: string, params: Record<string, any> = {}): Promise<any> {
         const back_off_time = this.start_backoff_time; // Startwert für Backoff
         let access_token = await this.authService.getAccessToken(); // Token einmalig holen

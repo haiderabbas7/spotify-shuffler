@@ -216,7 +216,7 @@ export class ShuffleService {
     }
 
     async resetTestPlaylistCopy() {
-        await this.spotifyApiService.sendPutCall(`playlists/4B2UOzffIG92Kh2PTPqgWi/tracks`, {
+        await this.spotifyApiService.sendPutCall(`playlists/6eEJAP7U12nFve8GLYQYnd/tracks`, {
             uris: [
                 'spotify:track:2SuyyRbbciDBXEZerQ6PE1', //A
                 'spotify:track:7t1FUkqJRdQdNrkjwfhq2H', //B

@@ -11,6 +11,12 @@ import { LowDbService } from '../low-db/low-db.service';
 import { promises as fs } from 'fs';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
+//TODO: hier und überall service die imports optimieren
+
+//TODO: hier und überall ungenutzte injected services ausm konstruktor hauen
+
+//TODO: hier und überall so warnings beheben, vllt sonarqube holen und laufen lassen
+
 @Injectable()
 export class MainService {
     constructor(

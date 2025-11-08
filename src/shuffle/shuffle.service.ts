@@ -58,9 +58,11 @@ export class ShuffleService {
              *  beide calls brauchen fast 6 sekunden, obwohl das fragen nach den tracks einfach 26 mehr calls sind
              *  ich kann aber beim abfragen der playlists auch die tracks mit abfragen
              *  guck ob ich das alles in einen call packen kann, vielleicht geht das ja schneller und ich kann mir die 6 sekunden sparen*/
-            const max_weight = 1000;
-            const min_weight = 50;
-            const base_weight = 500;
+            const MIN_WEIGHT = 50;
+            const BASE_WEIGHT = 500;
+            //TODO: für die zwei konstanten hier bessere namen überlegen
+            const WEIGHT_LOWERING_RATE = 0.5
+            const WEIGHT_INCREASE_RATE = 1.1
             const playlist =
                 await this.playlistService.getPlaylistByIDOnlyNecessaryInfo(playlist_id);
             //const playlist_name = playlist.name
@@ -104,7 +106,7 @@ export class ShuffleService {
 
                     //joa added die neuen tracks mit base weight und löscht die zu löschenden tracks
                     for (const track of tracks_to_add) {
-                        await this.lowDBService.addTrack(playlist_id, track, base_weight);
+                        await this.lowDBService.addTrack(playlist_id, track, BASE_WEIGHT);
                     }
                     for (const track of tracks_to_remove) {
                         await this.lowDBService.removeTrack(playlist_id, track);
@@ -130,10 +132,10 @@ export class ShuffleService {
                     /*WICHTIG: google oder überleg dir eine bessere idee hier die weights anzupassen
                      *  halbieren bei auswahl und +10% ist glaube nicht so schlecht, aber es gibt safe fairere möglichkeiten*/
                     if (isInShuffledTracks) {
-                        const new_weight = Math.round(Math.max(track.weight * 0.5, min_weight));
+                        const new_weight = Math.round(Math.max(track.weight * WEIGHT_LOWERING_RATE, MIN_WEIGHT));
                         await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
                     } else {
-                        const new_weight = Math.round(Math.min(track.weight * 1.1, max_weight));
+                        const new_weight = Math.round(track.weight * WEIGHT_INCREASE_RATE);
                         await this.lowDBService.updateWeight(playlist_id, track.uri, new_weight);
                     }
                 }
@@ -144,7 +146,7 @@ export class ShuffleService {
             else {
                 await this.lowDBService.addPlaylist(playlist_id);
                 for (const track of all_tracks) {
-                    await this.lowDBService.addTrack(playlist_id, track.track.uri, base_weight);
+                    await this.lowDBService.addTrack(playlist_id, track.track.uri, BASE_WEIGHT);
                 }
                 /*OPTIONAL: ich muss ja nicht die tracks neu von der lowdb anfragen
                  *  stattdessen kann ich sie auch einfach mit base weight lokal speichern und damit arbeiten
@@ -215,6 +217,7 @@ export class ShuffleService {
         }
     }
 
+    //TODO: entf am ende, war zum testen
     async resetTestPlaylistCopy() {
         await this.spotifyApiService.sendPutCall(`playlists/6eEJAP7U12nFve8GLYQYnd/tracks`, {
             uris: [

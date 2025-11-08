@@ -11,7 +11,7 @@ async function bootstrap() {
     //Hiermit wird direkt die index route geöffnet, funktioniert auch wenn der await listen call erst danach kommt
     await (
         await helperService.getOpen()
-    )('https://localhost:777/');
+    )('http://localhost:777/');
     await server_app.listen(port);
 }
 bootstrap();
